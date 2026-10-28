@@ -1,0 +1,9 @@
+# Imagem de instalador para o tipo bootc-installer do image-builder (decisão 0011):
+# a própria imagem Luma acrescida do Anaconda, que é quem roda no boot da ISO e instala a imagem-carga
+# (--bootc-installer-payload-ref). Padrão documentado pelo osbuild ("FROM <bootc> + dnf install anaconda").
+# Os pacotes exatos que o Anaconda exige no Fedora 44 são hipótese [H]; o CI confirma ou derruba.
+ARG LUMA_IMAGE=localhost/luma:44
+FROM ${LUMA_IMAGE}
+# dnf5 em build de imagem Atomic é esperado no Fedora 44 [H]; sem ele, rpm-ostree instala o mesmo conjunto
+RUN pkgs='anaconda anaconda-install-env-deps anaconda-dracut'; \
+    if command -v dnf >/dev/null; then dnf -y install $pkgs && dnf clean all; else rpm-ostree install $pkgs; fi
