@@ -19,9 +19,9 @@ Regra herdada do LUMA-OS: nada é APROVADO sem evidência registrada. Estados: P
 ## Fase 1 (incremento 1: primeira ISO)
 | ID | Critério | Como | Estado | Evidência |
 |---|---|---|---|---|
-| F1-01 | ISO de instalação gerada a partir da imagem Luma | CI `iso` (`build/iso/build-iso.sh`) | FALHOU no run iso #1: caminho do armazenamento do podman diferente do esperado pelo image-builder (erro do workflow) e tipo `anaconda-iso` inexistente no image-builder. Corrigido; PENDENTE nova execução | [run 40625332809](https://github.com/Selhorstkaliel/Luma/actions/runs/40625332809) |
-| F1-02 | `.sha256` publicado junto confere com a ISO baixada | `sha256sum -c` | PENDENTE | — |
-| F1-03 | ISO inicia até o instalador em QEMU + OVMF com Secure Boot no CI | CI `iso`, passo de boot (só se o runner tiver `/dev/kvm`) | PENDENTE | captura no artefato |
+| F1-01 | ISO de instalação gerada a partir da imagem Luma | CI `iso` (`build/iso/build-iso.sh`) | PASSOU no run iso #2: `luma-0.9.0-dev-x86_64.iso`, 4.503.046.144 bytes, gerada pelo **fallback** `anaconda-iso` do bootc-image-builder. O tipo principal `bootc-installer` falhou (log de 79 bytes, motivo a investigar). Run #1 falhou antes (caminho do armazenamento) | [run 40626540431](https://github.com/Selhorstkaliel/Luma/actions/runs/40626540431), artefato 12790019241 |
+| F1-02 | `.sha256` publicado junto confere com a ISO baixada | `sha256sum -c` no PC do usuário | PENDENTE: aguardando o usuário | — |
+| F1-03 | ISO inicia até o instalador em QEMU + OVMF com Secure Boot no CI | CI `iso`, passo de boot | PARCIAL: o runner tem `/dev/kvm`; boot com `OVMF_CODE_4M.secboot.fd` + `OVMF_VARS_4M.ms.fd`; captura de 1920x1080 após 240 s com conteúdo ("VIVA", 30,9% de linhas iguais). Que a tela seja o instalador **não foi verificado** (falta olhar `boot/boot-240s.png`) | [run 40626540431](https://github.com/Selhorstkaliel/Luma/actions/runs/40626540431) |
 | F1-04 | `lab.sh check` no host do usuário (ex-F0-08) | laboratório | PENDENTE: exige o PC do usuário | — |
 | F1-05 | ISO do Luma inicia com Secure Boot na VM do usuário (ex-F0-10) | `BOOT_ISO=… lab.sh run` + screenshot | PENDENTE | `docs/evidence/fase1/` |
 | F1-06 | Instalação em disco virtual e primeiro boot do sistema instalado | laboratório | PENDENTE | — |

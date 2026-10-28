@@ -5,7 +5,7 @@ Atualizado em 2026-10-28. Plano: [PLANO-MESTRE.md](PLANO-MESTRE.md). Testes: [TE
 | Fase | Estado |
 |---|---|
 | 0: Auditoria e bootstrap | **CONCLUÍDA COM EXCEÇÕES** (2026-10-28, decisão do usuário). CI verde: lint, unit, build da imagem, `bootc container lint` e testes da imagem 12/12 ([run 40620197044](https://github.com/Selhorstkaliel/Luma/actions/runs/40620197044)). Não executados e transferidos para a Fase 1: qmllint e laboratório no PC do usuário |
-| 1: Fedora Core | **EM ANDAMENTO**. Incremento 1: primeira ISO de instalação gerada no CI (decisão 0011) |
+| 1: Fedora Core | **EM ANDAMENTO**. Primeira ISO gerada no CI ([run 40626540431](https://github.com/Selhorstkaliel/Luma/actions/runs/40626540431), artefato de 7 dias, 4,5 GB) pelo fallback `anaconda-iso` do bootc-image-builder. Falta: entender a falha do `bootc-installer`, confirmar que o boot chega ao instalador e o teste de instalação na VM do usuário (F1-02, F1-05, F1-06) |
 | 2: Midnight Desktop | NÃO INICIADA (ativos do tema claro/escuro do LUMA-OS portados; paleta Midnight não iniciada) |
 | 3: Luma Apps | NÃO INICIADA (app Ajustes e Central de Controle portados, ainda não executados no Fedora) |
 | 4: Gaming | NÃO INICIADA (`luma-windows-run` portado; bug do `wineboot` herdado e não investigado) |
