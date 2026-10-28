@@ -24,6 +24,8 @@ dnf -y install papirus-icon-theme rsms-inter-fonts
 dnf -y swap fedora-logos generic-logos
 ! rpm -q fedora-logos >/dev/null 2>&1 || { echo "fedora-logos continua instalado" >&2; exit 1; }
 dnf clean all
+# Resíduo do dnf em /var e /run vira aviso do bootc container lint (run ci 40635971059); /var é do sistema instalado
+rm -rf /var/lib/dnf /var/cache/libdnf5 /var/log/dnf5.log* /run/dnf
 
 # Dock: o nome do .desktop do Firefox varia entre versões do Fedora; usar o que a base realmente tem
 ff=""
