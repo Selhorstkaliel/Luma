@@ -34,10 +34,10 @@ var tasks = dock.addWidget("org.kde.plasma.icontasks");
 tasks.currentConfigGroup = ["General"];
 tasks.writeConfig("launchers", [
     "applications:org.kde.dolphin.desktop",
-    "applications:org.mozilla.firefox.desktop",   // nome do .desktop do Firefox no Fedora [H]: conferir na imagem
+    "applications:org.mozilla.firefox.desktop",   // o build da imagem troca pelo .desktop que existir (build/image/build.sh)
     "applications:org.kde.konsole.desktop",
-    "applications:org.kde.discover.desktop",
-    "applications:org.luma.ajustes.desktop"
+    "applications:org.kde.discover.desktop"
+    // org.luma.ajustes.desktop volta quando o app Ajustes entrar na imagem (Fase 3)
 ]);
 dock.addWidget("org.kde.plasma.marginsseparator");
 dock.addWidget("org.kde.plasma.trash");

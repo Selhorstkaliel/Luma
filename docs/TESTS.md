@@ -23,9 +23,17 @@ Regra herdada do LUMA-OS: nada é APROVADO sem evidência registrada. Estados: P
 | F1-02 | `.sha256` publicado junto confere com a ISO baixada | `sha256sum -c` no PC do usuário | PENDENTE: aguardando o usuário | — |
 | F1-03 | ISO inicia até o instalador em QEMU + OVMF com Secure Boot no CI | CI `iso`, passo de boot | INCONCLUSIVO: o runner tem `/dev/kvm` e a captura após 240 s tem conteúdo ("VIVA"), mas o detector não distingue o instalador do Boot Manager do OVMF. Na VM do usuário (Fedora 44, SB + chaves registradas, q35) a ISO caiu no Boot Manager sem entrada de DVD (2026-10-28). Corrigir o smoke test para exigir sinal do instalador (log serial/texto da tela) | [run 40626540431](https://github.com/Selhorstkaliel/Luma/actions/runs/40626540431) |
 | F1-04 | `lab.sh check` no host do usuário (ex-F0-08) | laboratório | PENDENTE: exige o PC do usuário | — |
-| F1-05 | ISO do Luma inicia com Secure Boot na VM do usuário (ex-F0-10) | `BOOT_ISO=… lab.sh run` + screenshot | PENDENTE | `docs/evidence/fase1/` |
-| F1-06 | Instalação em disco virtual e primeiro boot do sistema instalado | laboratório | PENDENTE | — |
+| F1-05 | ISO do Luma inicia com Secure Boot na VM do usuário (ex-F0-10) | `BOOT_ISO=… lab.sh run` + screenshot | PENDENTE com SB. Sem SB (libvirt q35, `--boot uefi`, host Fedora 44 do usuário, 2026-10-28) a ISO chegou ao GRUB "Install Luma-OS 44" e ao Anaconda. Com SB e chaves registradas a VM parou no Boot Manager do OVMF; a entrada "UEFI Misc Device" não foi testada | prints do usuário na conversa (não versionados) |
+| F1-06 | Instalação em disco virtual e primeiro boot do sistema instalado | laboratório | PARCIAL (2026-10-28): instalado em VM sem SB, sessão Plasma abre; `/etc/os-release` do sistema instalado mostra `NAME="Luma-OS"`, `ID=luma`, `VERSION="44.20261028.1 (Kinoite)"`. Hostname ficou `fedora`, apesar de `DEFAULT_HOSTNAME=luma` [H: definido pelo instalador]. Faltam `getenforce`, zona do firewalld e `bootc status` | print do usuário (Konsole na VM) |
 | F1-07 | QML sem erros (ex-F0-05) | `qmllint` no container Fedora | PENDENTE | — |
+
+## Fase 2 (incremento 1: tema Luma na imagem)
+Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usuário: "não foi a luma, foi o fedora"). Até aqui a imagem só trocava o os-release e o firewall.
+| ID | Critério | Como | Estado | Evidência |
+|---|---|---|---|---|
+| F2-I01..I08 | Tema instalado (Look-and-Feel, cores, Aurorae, Central de Controle, wallpaper, ícone), padrão `org.luma.dark.desktop` efetivo pelo `XDG_CONFIG_DIRS` da sessão, Papirus e Inter presentes, sem `fedora-logos`, lançadores do dock existentes | `tests/image/test-image.sh` no CI | PENDENTE (aguardando o CI) | — |
+| F2-01 | Usuário **novo** recebe o visual Luma escuro sem passo manual (barra superior, dock, wallpaper, decoração) | VM do usuário, ISO nova, usuário criado na instalação | PENDENTE | — |
+| F2-02 | Paleta Midnight medida no mockup aplicada ao esquema escuro, com contraste AA | `tests/unit/test_theme.py` | NÃO INICIADO: valores do mockup ainda não medidos; o esquema escuro atual é o do LUMA-OS | — |
 
 ## Regressão herdada do LUMA-OS
 Os critérios E1–E9 do LUMA-OS (`docs/TESTS.md` dele) servem de checklist das Fases 1, 2, 5 e 6. Cada um precisa passar de novo no Fedora ou ter a exceção registrada na decisão correspondente.

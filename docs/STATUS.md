@@ -6,7 +6,7 @@ Atualizado em 2026-10-28. Plano: [PLANO-MESTRE.md](PLANO-MESTRE.md). Testes: [TE
 |---|---|
 | 0: Auditoria e bootstrap | **CONCLUÍDA COM EXCEÇÕES** (2026-10-28, decisão do usuário). CI verde: lint, unit, build da imagem, `bootc container lint` e testes da imagem 12/12 ([run 40620197044](https://github.com/Selhorstkaliel/Luma/actions/runs/40620197044)). Não executados e transferidos para a Fase 1: qmllint e laboratório no PC do usuário |
 | 1: Fedora Core | **EM ANDAMENTO**. Primeira ISO gerada no CI ([run 40626540431](https://github.com/Selhorstkaliel/Luma/actions/runs/40626540431), artefato de 7 dias, 4,5 GB) pelo fallback `anaconda-iso` do bootc-image-builder. Falta: entender a falha do `bootc-installer`, confirmar que o boot chega ao instalador e o teste de instalação na VM do usuário (F1-02, F1-05, F1-06) |
-| 2: Midnight Desktop | NÃO INICIADA (ativos do tema claro/escuro do LUMA-OS portados; paleta Midnight não iniciada) |
+| 2: Midnight Desktop | **EM ANDAMENTO**. Incremento 1: tema Luma (escuro por padrão), Papirus, Inter e `generic-logos` no lugar de `fedora-logos` entram na imagem; aguardando CI e teste na VM. Paleta Midnight medida, tema de login e Anaconda com marca própria ficam para os próximos incrementos |
 | 3: Luma Apps | NÃO INICIADA (app Ajustes e Central de Controle portados, ainda não executados no Fedora) |
 | 4: Gaming | NÃO INICIADA (`luma-windows-run` portado; bug do `wineboot` herdado e não investigado) |
 | 5: Segurança e desempenho | NÃO INICIADA (zona firewalld `luma` criada; teste por nmap pendente) |
@@ -32,4 +32,6 @@ A edição Fedora nasceu neste repositório a partir de `Selhorstkaliel/LUMA-OS@
 7. Arquivar o LUMA-OS. O `STATUS.md` dele diz "repositório privado", mas o repositório está público [F].
 
 ## Próximo passo
-Ver o resultado do CI no GitHub. Depois, no laboratório do host: `lab.sh fetch-iso` (com `FEDORA_KEY_FPR`), `BOOT_ISO=… lab.sh run`, screenshot da tela de boot com Secure Boot em `docs/evidence/fase0/`.
+1. CI `ci` e `iso` do incremento de tema: ler os testes F2-I01..I08 e a evidência de `XDG_CONFIG_DIRS` no log.
+2. Na VM do usuário: reinstalar com a ISO nova e criar um usuário novo (F2-01). Usuários já existentes mantêm a configuração própria; para eles: `luma-appearance escuro --reset-layout`.
+3. Ainda da Fase 1: `getenforce`, zona do firewalld e `bootc status` na VM (F1-06); boot com Secure Boot (F1-05); `sha256sum -c` (F1-02).

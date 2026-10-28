@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Testes da imagem construída, executados DENTRO do container (sem boot):
 #   podman run --rm -v "$PWD/tests/image:/t:ro,z" localhost/luma:44 /t/test-image.sh
-# Confere o que a Fase 0 promete. O que só o boot comprova (getenforce, nmap) é teste de VM (docs/TESTS.md).
+# Confere o que as Fases 0 e 2 prometem. O que só o boot comprova (getenforce, nmap) é teste de VM (docs/TESTS.md).
 set -uo pipefail
 fails=0
 check() {
@@ -37,6 +37,43 @@ check F0-I09 "firewalld habilitado no boot" enabled firewalld.service
 check F0-I10 "SELinux configurado enforcing" grep -qx 'SELINUX=enforcing' /etc/selinux/config
 check F0-I11 "bootc presente" command -v bootc
 check F0-I12 "sem resíduo do build" test ! -e /tmp/luma-build
+
+# Fase 2, incremento 1: tema Luma instalado e padrão para usuários novos
+# XDG_CONFIG_DIRS como a sessão o recebe: scripts de login e de ambiente do Plasma (aproximação [H]; a VM confirma)
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+session_xdg() {
+	bash -c 'for f in /etc/profile.d/*.sh /etc/xdg/plasma-workspace/env/*.sh; do [ -r "$f" ] && . "$f"; done >/dev/null 2>&1; echo "${XDG_CONFIG_DIRS:-/etc/xdg}"'
+}
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+default_lnf() {
+	local home v
+	home="$(mktemp -d)"
+	v="$(HOME="$home" XDG_CONFIG_HOME="$home/.config" XDG_CONFIG_DIRS="$(session_xdg)" kreadconfig6 --file kdeglobals --group KDE --key LookAndFeelPackage)"
+	rm -rf "$home"
+	echo "LookAndFeelPackage efetivo: $v (XDG_CONFIG_DIRS=$(session_xdg))"
+	test "$v" = org.luma.dark.desktop
+}
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+launchers_exist() {
+	local f l rc=0
+	for f in /usr/share/plasma/look-and-feel/org.luma*/contents/layouts/org.kde.plasma.desktop-layout.js; do
+		for l in $(grep -o '"applications:[^"]*"' "$f" | tr -d '"' | sed 's/^applications://'); do
+			[ -f "/usr/share/applications/$l" ] || { echo "lançador ausente: $l ($f)" >&2; rc=1; }
+		done
+	done
+	return $rc
+}
+LNF=/usr/share/plasma/look-and-feel
+check F2-I01 "Look-and-Feel Luma claro e escuro com layout" test -f $LNF/org.luma.desktop/contents/layouts/org.kde.plasma.desktop-layout.js -a -f $LNF/org.luma.dark.desktop/contents/layouts/org.kde.plasma.desktop-layout.js
+check F2-I02 "esquemas de cores, Aurorae e Central de Controle" test -f /usr/share/color-schemes/LumaDark.colors -a -f /usr/share/aurorae/themes/LumaEscuro/decoration.svg -a -f /usr/share/plasma/plasmoids/org.luma.controlcenter/metadata.json
+check F2-I03 "wallpaper Luma rasterizado (claro e escuro)" test -s /usr/share/wallpapers/Luma/contents/images/1920x1080.png -a -s /usr/share/wallpapers/Luma/contents/images_dark/1920x1080.png
+check F2-I04 "ícone luma-logo e luma-appearance" test -f /usr/share/icons/hicolor/scalable/apps/luma-logo.svg -a -x /usr/bin/luma-appearance
+check F2-I05 "LookAndFeelPackage padrão = org.luma.dark.desktop" default_lnf
+check F2-I06 "dependências do tema (Papirus-Dark, fonte Inter)" test -d /usr/share/icons/Papirus-Dark -a -n "$(fc-list Inter family)"
+check F2-I07 "sem fedora-logos" bash -c '! rpm -q fedora-logos'
+check F2-I08 "lançadores do dock existem na imagem" launchers_exist
+default_lnf || true
+launchers_exist || true
 
 echo "falhas: $fails"
 exit $((fails > 0))

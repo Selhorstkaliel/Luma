@@ -1,12 +1,13 @@
 # Luma: padrões de sistema para usuários novos (luma-session).
 # No Debian, /etc/xdg vinha antes de /usr/share/desktop-base/kf5-settings em XDG_CONFIG_DIRS.
 # No Fedora os padrões do KDE vêm do pacote kde-settings; a precedência de /etc/xdg sobre eles
-# ainda não foi conferida no Fedora 44 [H] (Fase 2).
+# é conferida em tests/image/test-image.sh (F2-I05); o efeito na sessão só a VM comprova.
+# Padrão: Luma escuro (Midnight). Fonte Inter: pacote rsms-inter-fonts no Fedora.
 # Preferências já gravadas pelo usuário em ~/.config continuam valendo.
 [KDE]
-LookAndFeelPackage=org.luma.desktop
+LookAndFeelPackage=org.luma.dark.desktop
 
-# Fonte padrão Inter (fonts-inter, OFL-1.1), como nos mockups
+# Fonte padrão Inter (OFL-1.1), como nos mockups
 [General]
 font=Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 menuFont=Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1

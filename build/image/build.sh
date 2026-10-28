@@ -15,6 +15,35 @@ zone="$(firewall-offline-cmd --get-default-zone)"
 [ "$zone" = luma ] || { echo "zona padrão do firewalld é '$zone', esperado 'luma'" >&2; exit 1; }
 systemctl enable firewalld.service
 
+# Tema (Fase 2, incremento 1): ícones Papirus (GPL-3.0) e fonte Inter (OFL-1.1) usados pelos pacotes Look-and-Feel
+dnf -y install papirus-icon-theme rsms-inter-fonts
+fc-list | grep -q 'Inter' || { echo "fonte Inter não encontrada após instalar rsms-inter-fonts" >&2; exit 1; }
+
+# Marca: sem logos do Fedora (decisão 0010). generic-logos fornece o mesmo "system-logos" com arte neutra.
+dnf -y swap fedora-logos generic-logos
+! rpm -q fedora-logos >/dev/null 2>&1 || { echo "fedora-logos continua instalado" >&2; exit 1; }
+dnf clean all
+
+# Dock: o nome do .desktop do Firefox varia entre versões do Fedora; usar o que a base realmente tem
+ff=""
+for cand in org.mozilla.firefox.desktop firefox.desktop; do
+	[ -f "/usr/share/applications/$cand" ] && { ff="$cand"; break; }
+done
+for layout in /usr/share/plasma/look-and-feel/org.luma*/contents/layouts/org.kde.plasma.desktop-layout.js; do
+	if [ -n "$ff" ]; then
+		sed -i "s/applications:org\.mozilla\.firefox\.desktop/applications:$ff/" "$layout"
+	else
+		sed -i '/applications:org\.mozilla\.firefox\.desktop/d' "$layout"
+	fi
+done
+echo "luma: Firefox no dock: ${ff:-ausente na base, removido}"
+
+# Evidência para a precedência dos padrões (kde-settings × /etc/xdg); conferida em tests/image/test-image.sh
+echo "--- XDG_CONFIG_DIRS e LookAndFeelPackage definidos pela base ---"
+grep -rsn 'XDG_CONFIG_DIRS' /etc/profile.d /etc/xdg/plasma-workspace/env || true
+grep -rsn 'LookAndFeelPackage' /etc/xdg /usr/share/kde-settings || true
+echo "---"
+
 # SELinux continua enforcing (padrão do Fedora); falhar se a base vier diferente
 grep -qx 'SELINUX=enforcing' /etc/selinux/config || { echo "SELinux não está enforcing em /etc/selinux/config" >&2; exit 1; }
 
