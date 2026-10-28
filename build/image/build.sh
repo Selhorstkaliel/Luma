@@ -17,7 +17,8 @@ systemctl enable firewalld.service
 
 # Tema (Fase 2, incremento 1): ícones Papirus (GPL-3.0) e fonte Inter (OFL-1.1) usados pelos pacotes Look-and-Feel
 dnf -y install papirus-icon-theme rsms-inter-fonts
-fc-list | grep -q 'Inter' || { echo "fonte Inter não encontrada após instalar rsms-inter-fonts" >&2; exit 1; }
+# Sem pipe: com pipefail, "fc-list | grep -q" falha por SIGPIPE quando acha (run ci 40634925786)
+[ -n "$(fc-list Inter family)" ] || { echo "fonte Inter não encontrada após instalar rsms-inter-fonts" >&2; exit 1; }
 
 # Marca: sem logos do Fedora (decisão 0010). generic-logos fornece o mesmo "system-logos" com arte neutra.
 dnf -y swap fedora-logos generic-logos
