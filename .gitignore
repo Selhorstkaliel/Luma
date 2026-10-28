@@ -1,0 +1,22 @@
+# Artefatos pesados e segredos do laboratório nunca entram no repositório
+*.iso
+*.qcow2
+*.vhdx
+*.img
+*.fd
+.lab/
+secrets/
+*.key
+*.pem
+id_ed25519*
+cosign.key
+
+# Saídas de build
+build/theme-root/
+manifest.txt
+image-info.txt
+
+# Python
+__pycache__/
+*.pyc
+.ruff_cache/

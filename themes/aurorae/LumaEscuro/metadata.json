@@ -1,0 +1,15 @@
+{
+    "KPackageStructure": "KWin/Aurorae",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Projeto Luma"
+            }
+        ],
+        "Id": "LumaEscuro",
+        "License": "GPL-2.0-or-later",
+        "Name": "Luma Escuro",
+        "Name[pt_BR]": "Luma Escuro",
+        "Version": "0.5.0"
+    }
+}

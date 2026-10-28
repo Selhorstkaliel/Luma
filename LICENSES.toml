@@ -1,0 +1,26 @@
+# Inventário de licenças dos arquivos do repositório (decisão 0010).
+# Cada arquivo versionado precisa casar com uma regra; tests/unit/test_licenses.py confere.
+# Ordem importa: a primeira regra que casa vale. "origem" registra de onde o arquivo veio.
+
+[[regra]]
+padrao = "wallpapers/**"
+licenca = "CC-BY-SA-4.0"
+origem = "Arte original do Projeto Luma (LUMA-OS@44903f2, theme/wallpapers)"
+
+[[regra]]
+padrao = "docs/evidence/**"
+licenca = "CC-BY-SA-4.0"
+origem = "Evidências de teste geradas pelo Projeto Luma"
+
+[[regra]]
+padrao = "docs/**"
+licenca = "CC-BY-SA-4.0"
+origem = "Documentação do Projeto Luma"
+
+[[regra]]
+padrao = "**"
+licenca = "GPL-2.0-or-later"
+origem = "Código e ativos do Projeto Luma (parte herdada de LUMA-OS@44903f2)"
+
+# Dependências de execução (não estão no repositório, entram pela imagem):
+#   Fonte Inter: OFL-1.1 · Ícones Papirus: GPL-3.0 · Fedora/KDE: licenças dos respectivos pacotes.

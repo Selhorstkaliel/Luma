@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Projeto Luma"
+            }
+        ],
+        "Id": "Luma",
+        "License": "CC-BY-SA-4.0",
+        "Name": "Luma Ondas",
+        "Name[pt_BR]": "Luma Ondas"
+    }
+}

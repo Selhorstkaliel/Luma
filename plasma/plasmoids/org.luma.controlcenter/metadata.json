@@ -1,0 +1,16 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "Projeto Luma" }],
+        "Category": "System Information",
+        "Description": "Wi-Fi, Bluetooth, do not disturb, screen mirroring, brightness and volume",
+        "Description[pt_BR]": "Wi-Fi, Bluetooth, não perturbe, espelhamento de tela, brilho e volume",
+        "Icon": "luma-controlcenter",
+        "Id": "org.luma.controlcenter",
+        "License": "GPL-2.0-or-later",
+        "Name": "Control Center",
+        "Name[pt_BR]": "Central de Controle",
+        "Version": "0.5.2"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

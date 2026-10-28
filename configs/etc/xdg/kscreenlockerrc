@@ -1,0 +1,6 @@
+# Luma: tela de bloqueio com o papel de parede Luma (luma-session)
+[Greeter]
+WallpaperPlugin=org.kde.image
+
+[Greeter][Wallpaper][org.kde.image][General]
+Image=file:///usr/share/wallpapers/Luma

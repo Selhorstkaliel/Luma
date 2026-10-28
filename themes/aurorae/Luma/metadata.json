@@ -1,0 +1,15 @@
+{
+    "KPackageStructure": "KWin/Aurorae",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Projeto Luma"
+            }
+        ],
+        "Id": "Luma",
+        "License": "GPL-2.0-or-later",
+        "Name": "Luma Claro",
+        "Name[pt_BR]": "Luma Claro",
+        "Version": "0.5.0"
+    }
+}

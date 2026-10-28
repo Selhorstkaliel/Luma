@@ -1,0 +1,6 @@
+# Luma: botões de janela à esquerda (fechar, minimizar, maximizar), como nos mockups (luma-session).
+# O Plasma só copia biblioteca/tema da decoração do Look-and-Feel para kdedefaults; a ordem dos
+# botões precisa ser um padrão de sistema.
+[org.kde.kdecoration2]
+ButtonsOnLeft=XIA
+ButtonsOnRight=

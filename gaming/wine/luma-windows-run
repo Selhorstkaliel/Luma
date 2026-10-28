@@ -1,0 +1,82 @@
+#!/bin/sh
+# luma-windows-run — abre um programa do Windows (.exe ou .msi) pelo Wine da distribuição (decisão 0007).
+# Herdado do LUMA-OS (Wine do Debian); no Fedora ainda não testado [H] (Fase 4).
+# Melhor esforço: não garante que o programa funcione e NÃO é uma barreira de segurança (o programa roda
+# como o usuário e alcança os mesmos arquivos). Nunca roda como root.
+# uso: luma-windows-run ARQUIVO.exe|ARQUIVO.msi   |   luma-windows-run --remover
+set -u
+TITLE="Programas do Windows"
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}/luma-windows"
+CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/luma-windows"
+LOG="$CACHE/ultimo.log"
+
+have_gui() { command -v kdialog >/dev/null 2>&1 && [ -n "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ]; }
+fail() {
+	echo "luma-windows-run: $1" >&2
+	if have_gui; then kdialog --title "$TITLE" --error "$1" >/dev/null 2>&1; fi
+	exit "${2:-1}"
+}
+
+[ "$(id -u)" != 0 ] || fail "Programas do Windows não podem ser abertos como administrador (root). Abra com o seu usuário." 77
+command -v wine >/dev/null 2>&1 || fail "A camada de compatibilidade (Wine) não está instalada." 69
+[ $# -eq 1 ] || fail "Uso: luma-windows-run ARQUIVO.exe | ARQUIVO.msi | --remover" 64
+
+mode=exe
+if [ "$1" = "--remover" ]; then
+	mode=remover
+else
+	f="$1"
+	if [ ! -f "$f" ] || [ ! -r "$f" ]; then
+		fail "Arquivo não encontrado ou sem permissão de leitura:
+$f" 66
+	fi
+	# Confere o tipo pelo conteúdo, não pelo nome: executável do Windows começa com "MZ"; pacote .msi é um
+	# documento composto (D0 CF 11 E0)
+	magic="$(od -An -tx1 -N4 "$f" | tr -d ' \n')"
+	case "$magic" in
+		4d5a*) mode=exe ;;
+		d0cf11e0) mode=msi ;;
+		*) fail "Este arquivo não é um programa do Windows válido (pode estar corrompido ou incompleto):
+$f" 65 ;;
+	esac
+fi
+
+# Aviso no primeiro uso de cada usuário; "Cancelar" não abre nada
+mkdir -p "$CONF" "$CACHE"
+if [ ! -e "$CONF/aviso-aceito" ]; then
+	aviso="Programas do Windows rodam no Luma por uma camada de compatibilidade (Wine).
+
+• O programa pode não funcionar, ou funcionar só em parte.
+• Isto NÃO é uma barreira de segurança: o programa tem acesso aos seus arquivos e à rede como qualquer outro programa seu. Um vírus de Windows pode apagar ou copiar os seus documentos.
+
+Abra apenas programas de origem confiável."
+	if have_gui; then
+		kdialog --title "$TITLE" --warningcontinuecancel "$aviso" >/dev/null 2>&1 || exit 0
+	else
+		printf '%s\n' "$aviso" >&2
+	fi
+	: > "$CONF/aviso-aceito"
+fi
+
+export WINEDEBUG="${WINEDEBUG:-fixme-all}"
+# Primeira vez: cria a pasta do Wine sem as janelas que oferecem baixar Mono/Gecko da internet
+if [ ! -d "${WINEPREFIX:-$HOME/.wine}" ]; then
+	if have_gui; then kdialog --title "$TITLE" --passivepopup "Preparando a compatibilidade com Windows (só na primeira vez)…" 30 >/dev/null 2>&1 & fi
+	WINEDLLOVERRIDES="mscoree,mshtml=" wineboot -u >"$CACHE/preparo.log" 2>&1 ||
+		fail "Não foi possível preparar a camada de compatibilidade. Detalhes em $CACHE/preparo.log"
+fi
+
+case "$mode" in
+	remover) wine uninstaller >"$LOG" 2>&1; rc=$? ;;
+	msi) cd "$(dirname "$f")" 2>/dev/null || true; wine msiexec /i "$f" >"$LOG" 2>&1; rc=$? ;;
+	exe) cd "$(dirname "$f")" 2>/dev/null || true; wine "$f" >"$LOG" 2>&1; rc=$? ;;
+esac
+# O Wine relata na saída quando nem chegou a iniciar o programa (formato inválido, arquitetura sem suporte)
+if [ "$rc" != 0 ] && grep -q -E '^wine: (failed|could not|cannot|Bad EXE format)' "$LOG"; then
+	fail "O Wine não conseguiu abrir este programa.
+
+$(grep -m1 -E '^wine: ' "$LOG")
+
+Detalhes em $LOG" "$rc"
+fi
+exit "$rc"

@@ -1,0 +1,70 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# luma-appearance: aplica a aparência Luma clara ou escura na sessão Plasma atual.
+#
+# O plasma-apply-lookandfeel do Plasma 6.3 não grava o esquema de cores nem os ícones do pacote
+# (comportamento igual com o Breeze Dark oficial; ver docs/evidence/etapa2). Por isso os passos
+# são aplicados explicitamente com as ferramentas do próprio Plasma e o resultado é conferido.
+set -eu
+
+usage() {
+	echo "uso: luma-appearance claro|escuro [--reset-layout]" >&2
+	echo "  --reset-layout  recria painel superior e dock e aplica o papel de parede Luma" >&2
+	exit 64
+}
+
+[ $# -ge 1 ] || usage
+case "$1" in
+	claro|light) lnf=org.luma.desktop; scheme=LumaLight; icons=Papirus; deco=Luma ;;
+	escuro|dark) lnf=org.luma.dark.desktop; scheme=LumaDark; icons=Papirus-Dark; deco=LumaEscuro ;;
+	*) usage ;;
+esac
+reset=""
+if [ "${2:-}" = "--reset-layout" ]; then reset=1; elif [ $# -gt 1 ]; then usage; fi
+
+changeicons=""
+for c in /usr/lib/*/libexec/plasma-changeicons /usr/libexec/plasma-changeicons; do
+	[ -x "$c" ] && changeicons="$c" && break
+done
+[ -n "$changeicons" ] || { echo "luma-appearance: plasma-changeicons não encontrado" >&2; exit 2; }
+
+quiet() { "$@" >/dev/null 2>&1; }
+
+if [ -n "$reset" ]; then
+	# O layout do pacote também define o papel de parede Luma
+	quiet plasma-apply-lookandfeel -a "$lnf" --resetLayout
+else
+	quiet plasma-apply-lookandfeel -a "$lnf"
+fi
+# Retorna erro quando o esquema já está ativo; o resultado é verificado abaixo.
+quiet plasma-apply-colorscheme "$scheme" || true
+# Cor de destaque escolhida no app Ajustes ([Luma] AccentColor): o Plasma não a guarda sozinho
+accent="$(kreadconfig6 --file kdeglobals --group Luma --key AccentColor)"
+if [ -n "$accent" ]; then quiet plasma-apply-colorscheme --accent-color "$accent" || true; fi
+quiet "$changeicons" "$icons" || true
+# Estilo do Plasma (painéis/dock seguem o esquema de cores); o padrão do Debian era breeze-dark
+# (no Fedora 44 o padrão ainda não foi conferido [H]).
+# O plasmashell só redesenha os painéis com o novo estilo depois de reiniciar; isso só acontece
+# quando o estilo realmente muda (normalmente uma única vez, ao sair do padrão da base).
+style_before="$(kreadconfig6 --file plasmarc --group Theme --key name --default default)"
+quiet plasma-apply-desktoptheme default || true
+if [ "$style_before" != default ]; then
+	quiet systemctl --user restart plasma-plasmashell.service || true
+fi
+# Decoração de janelas (botões à esquerda) e recarga do KWin
+kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library org.kde.kwin.aurorae
+kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key theme "__aurorae__svg__$deco"
+kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft XIA
+kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight ""
+quiet qdbus6 org.kde.KWin /KWin reconfigure || true
+
+got_scheme="$(kreadconfig6 --file kdeglobals --group General --key ColorScheme)"
+# "breeze" é o padrão do Plasma: ao escolhê-lo, o grupo [Icons] é removido do kdeglobals
+got_icons="$(kreadconfig6 --file kdeglobals --group Icons --key Theme --default breeze)"
+got_deco="$(kreadconfig6 --file kwinrc --group org.kde.kdecoration2 --key theme)"
+got_style="$(kreadconfig6 --file plasmarc --group Theme --key name --default default)"
+if [ "$got_scheme" != "$scheme" ] || [ "$got_icons" != "$icons" ] || [ "$got_deco" != "__aurorae__svg__$deco" ] || [ "$got_style" != default ]; then
+	echo "luma-appearance: falha ao aplicar (esquema=$got_scheme, ícones=$got_icons, decoração=$got_deco, estilo=$got_style)" >&2
+	exit 1
+fi
+echo "Aparência Luma $1 aplicada."

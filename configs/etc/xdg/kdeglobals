@@ -1,0 +1,18 @@
+# Luma: padrões de sistema para usuários novos (luma-session).
+# No Debian, /etc/xdg vinha antes de /usr/share/desktop-base/kf5-settings em XDG_CONFIG_DIRS.
+# No Fedora os padrões do KDE vêm do pacote kde-settings; a precedência de /etc/xdg sobre eles
+# ainda não foi conferida no Fedora 44 [H] (Fase 2).
+# Preferências já gravadas pelo usuário em ~/.config continuam valendo.
+[KDE]
+LookAndFeelPackage=org.luma.desktop
+
+# Fonte padrão Inter (fonts-inter, OFL-1.1), como nos mockups
+[General]
+font=Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+menuFont=Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+toolBarFont=Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+smallestReadableFont=Inter,8,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+fixed=DejaVu Sans Mono,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+
+[WM]
+activeFont=Inter,10,-1,5,600,0,0,0,0,0,0,0,0,0,0,1

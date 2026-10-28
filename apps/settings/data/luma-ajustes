@@ -1,0 +1,4 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Inicia o app Ajustes do Luma (módulo Python em /usr/share/luma-ajustes).
+PYTHONPATH="/usr/share/luma-ajustes${PYTHONPATH:+:$PYTHONPATH}" exec python3 -m luma_ajustes "$@"

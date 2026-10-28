@@ -1,0 +1,19 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Projeto Luma"
+            }
+        ],
+        "Category": "",
+        "Description": "Luma light: top bar and floating dock",
+        "Description[pt_BR]": "Luma claro: painel superior e dock flutuante",
+        "Id": "org.luma.desktop",
+        "License": "GPL-2.0-or-later",
+        "Name": "Luma Light",
+        "Name[pt_BR]": "Luma Claro",
+        "Website": ""
+    },
+    "X-Plasma-APIVersion": "2"
+}

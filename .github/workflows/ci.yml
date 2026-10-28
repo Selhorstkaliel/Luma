@@ -1,0 +1,48 @@
+# CI da Fase 0: lint, testes unitários e build + teste da imagem bootc.
+# NÃO publica nada: sem login em registro, sem push, sem assinatura (decisão 0009, pendente de autorização).
+name: ci
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-e-unit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - run: pipx install ruff
+      - run: scripts/ci/lint.sh
+      - run: scripts/ci/unit.sh
+
+  imagem:
+    runs-on: ubuntu-24.04
+    needs: lint-e-unit
+    strategy:
+      fail-fast: false
+      matrix:
+        fedora: ["44"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Liberar espaço em disco (a base Kinoite ocupa vários GB)
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+      - name: Build da imagem
+        run: podman build --build-arg FEDORA_VERSION=${{ matrix.fedora }} -t localhost/luma:${{ matrix.fedora }} .
+      - name: Testes da imagem
+        run: podman run --rm -v "$PWD/tests/image:/t:ro" localhost/luma:${{ matrix.fedora }} /t/test-image.sh
+      - name: Manifesto de pacotes
+        run: |
+          podman run --rm localhost/luma:${{ matrix.fedora }} rpm -qa --qf '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n' | sort > manifest.txt
+          podman image inspect localhost/luma:${{ matrix.fedora }} --format '{{.Digest}} {{.Size}}' > image-info.txt
+          wc -l manifest.txt; cat image-info.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manifesto-luma-${{ matrix.fedora }}
+          path: |
+            manifest.txt
+            image-info.txt

@@ -1,0 +1,31 @@
+.TH LUMA-WINDOWS-RUN 1 "2026-10-01" "Luma" "Comandos do usuário"
+.SH NOME
+luma-windows-run \- abre um programa do Windows pelo Wine
+.SH SINOPSE
+.B luma-windows-run
+.I ARQUIVO.exe
+|
+.I ARQUIVO.msi
+|
+.B \-\-remover
+.SH DESCRIÇÃO
+Abre um executável ou instalador do Windows pela camada de compatibilidade (Wine da distribuição). É o
+programa associado ao duplo clique em arquivos .exe e .msi.
+.PP
+Confere pelo conteúdo se o arquivo é um programa do Windows, mostra um aviso no primeiro uso de
+cada usuário e prepara a pasta do Wine (~/.wine) na primeira vez.
+.B \-\-remover
+abre a lista de programas do Windows instalados, para desinstalar.
+.PP
+Não há garantia de que o programa funcione. O Wine não é uma barreira de segurança: o programa
+roda como o usuário e alcança os mesmos arquivos. O comando recusa rodar como root.
+.SH ARQUIVOS
+.TP
+.I ~/.config/luma-windows/aviso-aceito
+Marca que o aviso do primeiro uso já foi aceito.
+.TP
+.I ~/.cache/luma-windows/ultimo.log
+Saída do Wine na última execução.
+.SH CÓDIGOS DE SAÍDA
+64 uso incorreto; 65 arquivo não é um programa do Windows; 66 arquivo ausente; 69 Wine ausente;
+77 chamado como root; outros valores vêm do programa executado.

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Logotipo Luma — arte original do Projeto Luma. SPDX-License-Identifier: CC-BY-SA-4.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+ <defs>
+  <linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6FB1FF"/><stop offset="1" stop-color="#1F5FE0"/></linearGradient>
+  <linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A9D0FF"/><stop offset="1" stop-color="#3D7CF2"/></linearGradient>
+ </defs>
+ <!-- duas "luas" sobrepostas formando uma onda -->
+ <path d="M10,40 C10,24 22,12 38,12 C30,18 26,26 26,36 C26,46 32,52 40,54 C24,58 10,52 10,40 Z" fill="url(#a)"/>
+ <path d="M30,34 C30,22 40,14 52,16 C46,20 43,26 43,33 C43,41 48,46 54,48 C42,54 30,46 30,34 Z" fill="url(#b)" fill-opacity="0.92"/>
+</svg>

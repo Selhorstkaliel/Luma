@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Luma: entrada fechada, saída liberada (equivalente ao luma-firewall/ufw do LUMA-OS, controle E7-01).
+     Só a resposta de DHCPv6 é aceita, para a rede IPv6 funcionar; conexões iniciadas pela máquina voltam
+     normalmente. Serviços como KDE Connect ou compartilhamento são liberados pelo próprio usuário. -->
+<zone>
+  <short>Luma</short>
+  <description>Luma-OS: bloqueia conexões de entrada não solicitadas; permite todas as conexões de saída.</description>
+  <service name="dhcpv6-client"/>
+</zone>

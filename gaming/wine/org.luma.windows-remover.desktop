@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Remove Windows programs
+Name[pt_BR]=Remover programas do Windows
+Comment=Uninstall Windows programs installed through Wine
+Comment[pt_BR]=Desinstala programas do Windows instalados pelo Wine
+Exec=luma-windows-run --remover
+Icon=wine
+Terminal=false
+Categories=System;Settings;
+Keywords=wine;windows;uninstall;remover;desinstalar;
+StartupNotify=false

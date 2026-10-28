@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Settings
+Name[pt_BR]=Ajustes
+GenericName=Appearance and system settings
+GenericName[pt_BR]=Aparência e configurações do sistema
+Comment=Light or dark theme, accent color, transparency and text size
+Comment[pt_BR]=Tema claro ou escuro, cor de destaque, transparência e tamanho do texto
+Icon=preferences-system
+Exec=luma-ajustes
+Terminal=false
+Categories=Qt;KDE;Settings;
+Keywords=appearance;theme;dark;accent;aparência;tema;escuro;destaque;
+Keywords[pt_BR]=aparência;tema;escuro;claro;destaque;fonte;

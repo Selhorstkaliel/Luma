@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Windows program (Wine)
+Name[pt_BR]=Programa do Windows (Wine)
+Comment=Open a Windows program through the compatibility layer; it may not work
+Comment[pt_BR]=Abre um programa do Windows pela camada de compatibilidade; pode não funcionar
+Exec=luma-windows-run %f
+Icon=wine
+Terminal=false
+NoDisplay=true
+StartupNotify=false
+MimeType=application/vnd.microsoft.portable-executable;application/x-ms-dos-executable;application/x-msdos-program;application/x-msdownload;application/x-msi;
+InitialPreference=20
