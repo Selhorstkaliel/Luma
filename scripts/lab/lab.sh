@@ -76,7 +76,7 @@ cmd_fetch_iso() {
 	listing="$(curl -fsSL "$FEDORA_ISO_URL/")" || die "listagem indisponível: $FEDORA_ISO_URL/"
 	iso="${FEDORA_ISO:-$(grep -oE 'Fedora-Kinoite-[A-Za-z0-9._-]+\.iso' <<<"$listing" | sort -uV | tail -n1)}"
 	sums="$(grep -oE 'Fedora-Kinoite-[A-Za-z0-9._-]+-CHECKSUM' <<<"$listing" | sort -uV | tail -n1)"
-	[ -n "$iso" ] && [ -n "$sums" ] || die "ISO ou CHECKSUM da Kinoite não encontrados em $FEDORA_ISO_URL/"
+	if [ -z "$iso" ] || [ -z "$sums" ]; then die "ISO ou CHECKSUM da Kinoite não encontrados em $FEDORA_ISO_URL/"; fi
 
 	curl -fsSL "$FEDORA_ISO_URL/$sums" -o "$WORK/CHECKSUM.signed"
 	gnupg="$WORK/gnupg"; mkdir -m 0700 "$gnupg"

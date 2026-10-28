@@ -10,7 +10,8 @@ check() {
 }
 osr() { sed -n "s/^$1=//p" /usr/lib/os-release | tr -d '"'; }
 # Sem systemd em execução no container, is-enabled pode não responder; o link criado pelo enable também vale
-# shellcheck disable=SC2329  # chamada indiretamente por check
+# Chamada indiretamente por check (SC2317 no ShellCheck 0.9 do CI, SC2329 nas versões novas)
+# shellcheck disable=SC2317,SC2329
 enabled() { systemctl is-enabled -q "$1" 2>/dev/null || test -L "/etc/systemd/system/multi-user.target.wants/$1"; }
 
 check F0-I01 "os-release: ID=luma" test "$(osr ID)" = luma
