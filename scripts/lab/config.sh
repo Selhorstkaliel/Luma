@@ -11,9 +11,16 @@
 : "${FEDORA_ISO:=}"
 : "${FEDORA_ISO_URL:=https://dl.fedoraproject.org/pub/fedora/linux/releases/${FEDORA_VERSION}/Kinoite/x86_64/iso}"
 : "${FEDORA_KEYS_URL:=https://fedoraproject.org/fedora.gpg}"
-# Impressão digital da chave do Fedora $FEDORA_VERSION. SEM valor padrão de propósito: confira em
-# https://fedoraproject.org/security/ e informe aqui ou no ambiente. Sem ela, fetch-iso se recusa a continuar.
-: "${FEDORA_KEY_FPR:=}"
+# Impressão digital da chave de assinatura de cada versão, conferida pelo usuário em
+# https://fedoraproject.org/security/ em 2026-10-28 (o ID curto de cada chave bate com os 16 últimos dígitos).
+# Versão sem chave conferida: fetch-iso se recusa a continuar até FEDORA_KEY_FPR ser informada.
+if [ -z "${FEDORA_KEY_FPR:-}" ]; then
+	case "$FEDORA_VERSION" in
+		44) FEDORA_KEY_FPR=36F612DCF27F7D1A48A835E4DBFCF71C6D9F90A6 ;;   # rsa4096/DBFCF71C6D9F90A6, 2025-01-14
+		45) FEDORA_KEY_FPR=4F50A6114CD5C6976A7F1179655A4B02F577861E ;;   # rsa4096/655A4B02F577861E, 2025-07-29
+		*) FEDORA_KEY_FPR= ;;
+	esac
+fi
 
 # Perfil lab-desktop (herdado do LUMA-OS: host com 7,7 GiB de RAM, uma VM por vez)
 : "${VM_NAME:=lab-desktop}"

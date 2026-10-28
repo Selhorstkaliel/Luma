@@ -13,7 +13,7 @@ Regra herdada do LUMA-OS: nada é APROVADO sem evidência registrada. Estados: P
 | F0-06 | Imagem constrói a partir da Kinoite 44 e passa `bootc container lint` | CI `imagem` | PENDENTE: aguardando o primeiro CI no GitHub | — |
 | F0-07 | Testes da imagem F0-I01..I12 | `tests/image/test-image.sh` no CI | PENDENTE | — |
 | F0-08 | `lab.sh check` detecta firmware OVMF e `/dev/kvm` no host | laboratório | PENDENTE: exige o host do usuário | — |
-| F0-09 | ISO Kinoite 44 oficial baixada e verificada (GPG + SHA-256) | `lab.sh fetch-iso` | PENDENTE: exige `FEDORA_KEY_FPR` conferida pelo usuário | — |
+| F0-09 | ISO Kinoite 44 oficial baixada e verificada (GPG + SHA-256) | `lab.sh fetch-iso` | PENDENTE: exige o host do usuário (chave do F44 fixada em `config.sh`, conferida pelo usuário em 2026-10-28) | — |
 | F0-10 | VM inicia a ISO Kinoite 44 com Secure Boot ativo | `BOOT_ISO=… lab.sh run` + `lab.sh screenshot` | PENDENTE | `docs/evidence/fase0/` |
 
 ## Regressão herdada do LUMA-OS

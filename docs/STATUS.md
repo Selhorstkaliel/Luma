@@ -20,7 +20,7 @@ A edição Fedora nasceu neste repositório a partir de `Selhorstkaliel/LUMA-OS@
 ## O que não foi executado nesta sessão
 - `podman build` da imagem: o ambiente de nuvem não alcança `quay.io` (o proxy recusa). O build roda no CI do GitHub; o resultado ainda não foi visto.
 - Laboratório: o ambiente não tem `/dev/kvm` nem QEMU. `lab.sh check` falha como esperado; nenhum comando de VM foi testado.
-- `fetch-iso` exige `FEDORA_KEY_FPR`, a impressão digital da chave do Fedora 44, conferida pelo usuário em https://fedoraproject.org/security/. Ela não foi inventada.
+- As impressões digitais das chaves do Fedora 44 e 45 foram conferidas pelo usuário em https://fedoraproject.org/security/ (2026-10-28) e fixadas em `scripts/lab/config.sh`.
 
 ## Decisões pendentes do usuário (plano §12)
 1. Publicar no GHCR e assinar com cosign (0009).
