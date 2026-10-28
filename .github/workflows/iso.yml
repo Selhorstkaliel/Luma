@@ -27,17 +27,25 @@ jobs:
       LUMA_VERSION: "0.9.0-dev"
     steps:
       - uses: actions/checkout@v4
-      - name: Liberar espaço e usar o disco com mais espaço para o podman do root
+      - name: Liberar espaço e pôr o armazenamento do podman no disco com mais espaço
+        # O caminho /var/lib/containers/storage precisa ser o mesmo no host e dentro do image-builder (o banco do
+        # libpod grava o caminho; run iso #1 falhou com "database configuration mismatch"). Por isso bind mount,
+        # nunca graphroot diferente.
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache /usr/local/share/boost
           sudo docker image prune -af >/dev/null || true
           df -h / /mnt
           root_free=$(df --output=avail -k / | tail -1); mnt_free=$(df --output=avail -k /mnt | tail -1)
-          if [ "$mnt_free" -gt "$root_free" ]; then base=/mnt; else base=/var/tmp; fi
-          sudo mkdir -p "$base/containers" "$base/luma-out"
-          sudo mkdir -p /etc/containers
-          printf '[storage]\ndriver = "overlay"\ngraphroot = "%s/containers"\nrunroot = "/run/containers/storage"\n' "$base" | sudo tee /etc/containers/storage.conf
-          echo "OUT=$base/luma-out" >> "$GITHUB_ENV"
+          sudo mkdir -p /var/lib/containers/storage
+          if [ "$mnt_free" -gt "$root_free" ]; then
+            sudo mkdir -p /mnt/containers /mnt/luma-out
+            sudo mount --bind /mnt/containers /var/lib/containers/storage
+            echo "OUT=/mnt/luma-out" >> "$GITHUB_ENV"
+          else
+            sudo mkdir -p /var/tmp/luma-out
+            echo "OUT=/var/tmp/luma-out" >> "$GITHUB_ENV"
+          fi
+          findmnt /var/lib/containers/storage || echo "armazenamento do podman no disco raiz"
       - name: Build da imagem Luma (root)
         run: sudo podman build --build-arg FEDORA_VERSION=$FEDORA_VERSION --build-arg LUMA_VERSION=$LUMA_VERSION -t localhost/luma:$FEDORA_VERSION .
       - name: Testes da imagem

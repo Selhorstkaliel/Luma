@@ -19,7 +19,7 @@ Regra herdada do LUMA-OS: nada é APROVADO sem evidência registrada. Estados: P
 ## Fase 1 (incremento 1: primeira ISO)
 | ID | Critério | Como | Estado | Evidência |
 |---|---|---|---|---|
-| F1-01 | ISO de instalação gerada a partir da imagem Luma | CI `iso` (`build/iso/build-iso.sh`) | PENDENTE | — |
+| F1-01 | ISO de instalação gerada a partir da imagem Luma | CI `iso` (`build/iso/build-iso.sh`) | FALHOU no run iso #1: caminho do armazenamento do podman diferente do esperado pelo image-builder (erro do workflow) e tipo `anaconda-iso` inexistente no image-builder. Corrigido; PENDENTE nova execução | [run 40625332809](https://github.com/Selhorstkaliel/Luma/actions/runs/40625332809) |
 | F1-02 | `.sha256` publicado junto confere com a ISO baixada | `sha256sum -c` | PENDENTE | — |
 | F1-03 | ISO inicia até o instalador em QEMU + OVMF com Secure Boot no CI | CI `iso`, passo de boot (só se o runner tiver `/dev/kvm`) | PENDENTE | captura no artefato |
 | F1-04 | `lab.sh check` no host do usuário (ex-F0-08) | laboratório | PENDENTE: exige o PC do usuário | — |
