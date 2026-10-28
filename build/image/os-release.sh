@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Reescreve a identidade do sistema em os-release a partir do arquivo da base.
-# Mantém VERSION_ID, PLATFORM_ID, SUPPORT_END (fim de suporte da base) e demais campos de versão
-# (dnf, toolbox e bootc dependem deles) e troca
+# Mantém VERSION_ID, SUPPORT_END (fim de suporte da base), PLATFORM_ID quando existir (a Kinoite 44 não o traz,
+# visto no CI) e demais campos de versão (dnf, toolbox e bootc dependem deles) e troca
 # só nome, ID e endereços. ID=luma com ID_LIKE=fedora é hipótese a validar na VM [H] (decisão 0010).
 # uso: os-release.sh ARQUIVO VERSAO_LUMA
 set -euo pipefail

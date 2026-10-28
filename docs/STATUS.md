@@ -4,7 +4,7 @@ Atualizado em 2026-10-28. Plano: [PLANO-MESTRE.md](PLANO-MESTRE.md). Testes: [TE
 
 | Fase | Estado |
 |---|---|
-| 0: Auditoria e bootstrap | **EM ANDAMENTO**. Feito: estrutura, ADRs 0008–0010, ativos portados com os testes passando, Containerfile mínimo, CI (build e teste, sem publicação), lab adaptado. Falta: CI verde no GitHub e a VM Kinoite 44 com Secure Boot no laboratório (ver TESTS.md) |
+| 0: Auditoria e bootstrap | **EM ANDAMENTO**. Feito: estrutura, ADRs 0008–0010, ativos portados com os testes passando, Containerfile mínimo, CI (lint, unit e build da imagem passando), lab adaptado, chaves do Fedora fixadas. Falta: testes da imagem 12/12 no CI e a VM Kinoite 44 com Secure Boot no laboratório (ver TESTS.md) |
 | 1: Fedora Core | NÃO INICIADA |
 | 2: Midnight Desktop | NÃO INICIADA (ativos do tema claro/escuro do LUMA-OS portados; paleta Midnight não iniciada) |
 | 3: Luma Apps | NÃO INICIADA (app Ajustes e Central de Controle portados, ainda não executados no Fedora) |
@@ -18,7 +18,7 @@ Atualizado em 2026-10-28. Plano: [PLANO-MESTRE.md](PLANO-MESTRE.md). Testes: [TE
 A edição Fedora nasceu neste repositório a partir de `Selhorstkaliel/LUMA-OS@44903f2` (Luma 0.8.0, Debian 13). O LUMA-OS fica como histórico; ver [decisions/README.md](decisions/README.md).
 
 ## O que não foi executado nesta sessão
-- `podman build` da imagem: o ambiente de nuvem não alcança `quay.io` (o proxy recusa). O build roda no CI do GitHub; o resultado ainda não foi visto.
+- `podman build` da imagem: o ambiente de nuvem não alcança `quay.io`; o build roda no CI do GitHub e **passou** (incluindo `bootc container lint`) no [run 40617230109](https://github.com/Selhorstkaliel/Luma/actions/runs/40617230109). Testes da imagem: 11/12; a falha (F0-I04) era premissa errada do teste, corrigida e aguardando nova execução.
 - Laboratório: o ambiente não tem `/dev/kvm` nem QEMU. `lab.sh check` falha como esperado; nenhum comando de VM foi testado.
 - As impressões digitais das chaves do Fedora 44 e 45 foram conferidas pelo usuário em https://fedoraproject.org/security/ (2026-10-28) e fixadas em `scripts/lab/config.sh`.
 

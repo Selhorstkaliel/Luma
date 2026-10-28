@@ -4,6 +4,8 @@ set -euo pipefail
 : "${LUMA_VERSION:?}" "${FEDORA_VERSION:?}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
+# Guarda o os-release da base antes de reescrevê-lo: registro do que veio do Fedora e referência dos testes
+install -D -m 0644 "$(realpath /usr/lib/os-release)" /usr/share/luma/base-os-release
 "$HERE/os-release.sh" /usr/lib/os-release "$LUMA_VERSION"
 
 # Firewall: zona "luma" (entrada fechada, decisão 0008) como padrão. A ferramenta oficial grava a

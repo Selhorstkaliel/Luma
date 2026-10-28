@@ -17,7 +17,18 @@ enabled() { systemctl is-enabled -q "$1" 2>/dev/null || test -L "/etc/systemd/sy
 check F0-I01 "os-release: ID=luma" test "$(osr ID)" = luma
 check F0-I02 "os-release: ID_LIKE contém fedora" grep -qw fedora <<<"$(osr ID_LIKE)"
 check F0-I03 "os-release: VERSION_ID da base preservado" test -n "$(osr VERSION_ID)"
-check F0-I04 "os-release: PLATFORM_ID da base preservado" test -n "$(osr PLATFORM_ID)"
+# Campos que o Luma substitui (os-release.sh); todo o resto da base precisa continuar idêntico
+OWN='^(NAME|PRETTY_NAME|ID|ID_LIKE|VARIANT|VARIANT_ID|HOME_URL|DOCUMENTATION_URL|SUPPORT_URL|BUG_REPORT_URL|LOGO|ANSI_COLOR|CPE_NAME|DEFAULT_HOSTNAME|IMAGE_VERSION|REDHAT_[A-Z_]*)='
+BASE=/usr/share/luma/base-os-release
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+base_fields_kept() {
+	[ -s "$BASE" ] || return 1
+	local missing
+	missing="$(grep -E '^[A-Z_]+=' "$BASE" | grep -vE "$OWN" | grep -vxF -f /usr/lib/os-release)"
+	[ -z "$missing" ] || { echo "campos da base alterados ou ausentes:" >&2; echo "$missing" >&2; return 1; }
+}
+echo "--- os-release da base (evidência) ---"; cat "$BASE" 2>/dev/null || echo "(ausente)"; echo "---"
+check F0-I04 "os-release: demais campos da base preservados" base_fields_kept
 check F0-I05 "zona luma instalada" test -f /usr/lib/firewalld/zones/luma.xml
 check F0-I06 "zona padrão do firewalld = luma" test "$(firewall-offline-cmd --get-default-zone)" = luma
 check F0-I07 "zona luma sem serviços além de dhcpv6-client" test "$(firewall-offline-cmd --zone=luma --list-services)" = dhcpv6-client
