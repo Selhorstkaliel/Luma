@@ -18,7 +18,7 @@ import sys
 try:
     from PySide6.QtWidgets import QApplication, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 except ImportError as e:  # pragma: no cover - depende do sistema
-    raise ImportError("o módulo ui do Lume precisa do PySide6 (no Fedora/Luma: python3-pyside6)") from e
+    raise ImportError(f"o módulo ui do Lume precisa do PySide6 (no Fedora/Luma: python3-pyside6): {e}") from e
 
 from .core import to_str
 

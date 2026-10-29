@@ -83,7 +83,7 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 |---|---|---|---|---|
 | F7-U01 | Lexer, parser e verificador (posições, precedência, erros) | `lume/tests/test_lume_frontend.py` | PASSOU (local, 12/12) | — |
 | F7-U02 | Semântica do Python gerado (recursão, laços, closures, if/else if, nomes reservados, erro de execução com linha do .lume) | `lume/tests/test_lume_semantics.py` | PASSOU (local, 9/9) | — |
-| F7-I01 | Janela do `ola.lume` e botão do `contador.lume` funcionam sem tela, com o PySide6 do Fedora | CI, job imagem, `test_lume_ui.py` com `LUME_EXIGIR_QT=1` | PENDENTE (CI); localmente pulado por falta de PySide6 | — |
+| F7-I01 | Janela do `ola.lume` e botão do `contador.lume` funcionam sem tela | `test_lume_ui.py` (offscreen) | PASSOU localmente (2026-10-29, PySide6 6.12.0 via pip, Qt offscreen, 2/2: título e visibilidade da janela; 2 cliques → "Cliques: 2"). No CI, dentro da imagem com o `python3-pyside6` do Fedora: PENDENTE | — |
 | F7-01 | "hello world" Lume com janela Qt no Luma (critério da Fase 7) | VM: `python3 lume/bin/lumec run lume/examples/ola.lume` | PENDENTE | — |
 
 ## Regressão herdada do LUMA-OS
