@@ -112,7 +112,7 @@ ptbr_defaults() {
 		&& grep -qix 'pt_BR.utf8' <<<"$(locale -a)"
 }
 check F6-I01 "pt-BR, teclado br e fuso de São Paulo como padrão do sistema instalado" ptbr_defaults
-check F4-I01"jogos: gamemoderun, mangohud e gamescope presentes" bash -c 'command -v gamemoderun && command -v mangohud && command -v gamescope'
+check F4-I01 "jogos: gamemoderun, mangohud e gamescope presentes" bash -c 'command -v gamemoderun && command -v mangohud && command -v gamescope'
 check F4-I02 "jogos: luma-jogos gera os comandos Flatpak de usuário" bash -c 'luma-jogos --simular instalar steam | grep -q "flatpak install --user"'
 # A Kinoite traz arquivos .repo do RPM Fusion DESABILITADOS (fedora-workstation-repositories) [H]; a decisão
 # 0012 proíbe pacotes do RPM Fusion e repositório RPM Fusion habilitado, não os arquivos da base (ci #21).
