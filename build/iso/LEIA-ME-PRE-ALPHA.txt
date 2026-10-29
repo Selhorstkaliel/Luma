@@ -1,10 +1,13 @@
 Luma-OS - ISO PRÉ-ALPHA (somente para máquina virtual)
 
-Esta ISO é um build automático de desenvolvimento. NÃO instale em um computador real:
-nada foi testado em hardware, o instalador apaga o disco escolhido e não há garantia de nenhum tipo.
+ATENÇÃO: ESTA ISO INSTALA SOZINHA E APAGA O DISCO SEM PERGUNTAR.
+No CI (run iso #8, 2026-10-29), sem nenhuma interação, a instalação já estava em andamento
+4 minutos depois do boot. Use SOMENTE em máquina virtual com um disco virtual vazio.
+Nunca dê boot com ela em um computador real, nem com pendrive esquecido na porta USB.
 
-O que ela contém hoje: Fedora Kinoite 44 com a identidade Luma e o firewall de entrada fechado.
-Ainda NÃO tem o visual Midnight, os apps Luma nem o modo gaming.
+Esta ISO é um build automático de desenvolvimento, sem garantia de nenhum tipo.
+O que ela contém: Fedora Kinoite 44 com a identidade Luma, firewall de entrada fechado,
+tema Luma Midnight, tela de boot Luma e o comando "sudo luma-diagnostico".
 
 Conferir o arquivo antes de usar:
   sha256sum -c luma-*-x86_64.iso.sha256

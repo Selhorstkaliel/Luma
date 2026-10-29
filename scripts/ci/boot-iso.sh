@@ -37,7 +37,8 @@ all="$(cat "$out/boot-${early}s.txt" "$out/boot-${wait_s}s.txt" 2>/dev/null | tr
 # Firmware, Secure Boot ou kernel em qualquer captura; menu do GRUB só conta se ainda estiver na final
 bad='Boot Manager|Boot Options|Shell>|Access Denied|Security Violation|Verification failed|Kernel panic|emergency mode'
 stuck='Test this media'
-good='WELCOME|Welcome to|language would you like|INSTALLATION SUMMARY|Installation Summary|Bem-vindo'
+# "INSTALLATION PROGRESS": o kickstart do bootc-image-builder instala sozinho, sem tela de boas-vindas (run iso #8)
+good='WELCOME|Welcome to|language would you like|INSTALLATION SUMMARY|Installation Summary|INSTALLATION PROGRESS|Installation Progress|Bem-vindo'
 if grep -Eqi "$bad" <<<"$all" || grep -Eqi "$stuck" <<<"$final"; then verdict=FALHA
 elif grep -Eqi "$good" <<<"$final"; then verdict=INSTALADOR
 else verdict=INCONCLUSIVO; fi
