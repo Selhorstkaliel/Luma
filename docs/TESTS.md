@@ -25,7 +25,7 @@ Regra herdada do LUMA-OS: nada é APROVADO sem evidência registrada. Estados: P
 | F1-04 | `lab.sh check` no host do usuário (ex-F0-08) | laboratório | PENDENTE: exige o PC do usuário | — |
 | F1-05 | ISO do Luma inicia com Secure Boot na VM do usuário (ex-F0-10) | `BOOT_ISO=… lab.sh run` + screenshot | PENDENTE com SB. Sem SB (libvirt q35, `--boot uefi`, host Fedora 44 do usuário, 2026-10-28) a ISO chegou ao GRUB "Install Luma-OS 44" e ao Anaconda. Com SB e chaves registradas a VM parou no Boot Manager do OVMF; a entrada "UEFI Misc Device" não foi testada | prints do usuário na conversa (não versionados) |
 | F1-06 | Instalação em disco virtual e primeiro boot do sistema instalado | laboratório | PARCIAL (2026-10-28): instalado em VM sem SB, sessão Plasma abre; `/etc/os-release` do sistema instalado mostra `NAME="Luma-OS"`, `ID=luma`, `VERSION="44.20261028.1 (Kinoite)"`. Hostname ficou `fedora`, apesar de `DEFAULT_HOSTNAME=luma` [H: definido pelo instalador]. Faltam `getenforce`, zona do firewalld e `bootc status` | print do usuário (Konsole na VM) |
-| F1-07 | QML sem erros (ex-F0-05) | `qmllint` dentro da imagem Luma no CI (job imagem) | EM COLETA: o passo roda no CI sem bloquear, para registrar a saída real antes de virar critério | — |
+| F1-07 | QML sem erros (ex-F0-05) | `qmllint` dentro da imagem Luma no CI (job imagem) | EM COLETA (2026-10-29, ci #16): só avisos de estilo (`unqualified`, sugestão de `pragma ComponentBehavior: Bound`) em `org.luma.controlcenter/main.qml`; no trecho lido não aparece erro. Passo ainda não bloqueante | [ci 40866760583](https://github.com/Selhorstkaliel/Luma/actions/runs/40866760583) |
 | F1-08 | Hostname do sistema instalado é `luma` (o instalador gravava `fedora`) | `luma-hostname.service` (teste unitário `tests/unit/test_hostname.py`, 3/3 local) + `hostnamectl` na VM | PENDENTE na VM | — |
 | F1-09 | Evidências da VM num comando: `sudo luma-diagnostico` (SELinux, Secure Boot, firewall, portas, `bootc status`, logos, tema) | F1-I02 no CI + execução na VM | PENDENTE | — |
 
@@ -43,7 +43,7 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 ## Fase 3 (incremento 1: app Ajustes na imagem)
 | ID | Critério | Como | Estado | Evidência |
 |---|---|---|---|---|
-| F3-I01..I03 | PySide6 e `luma_ajustes` importam; a interface QML (Kirigami) carrega sem tela (`luma-ajustes --verificar`, offscreen); `.desktop` válido | `tests/image/test-image.sh` no CI | PENDENTE (CI) | — |
+| F3-I01..I03 | PySide6 e `luma_ajustes` importam; a interface QML (Kirigami) carrega sem tela (`luma-ajustes --verificar`, offscreen); `.desktop` válido | `tests/image/test-image.sh` no CI | PASSOU (2026-10-29): passo "Testes da imagem" verde no ci #15 (8dc7c00) e no ci #16 (f69b10a); o passo falha se qualquer verificação falhar | [ci 40866760583](https://github.com/Selhorstkaliel/Luma/actions/runs/40866760583) |
 | F3-01 | Ajustes abre pelo dock e aplica claro/escuro, destaque, animações, texto e transparência sem pedir senha | VM, usuário novo | PENDENTE | — |
 | F3-02 | Central de Controle (barra superior) mostra Wi-Fi, Bluetooth, Não perturbe, brilho e volume | VM | PENDENTE | — |
 | F3-03 | Boas-vindas (extensão do Plasma Setup) e presets do Monitor do Sistema | — | NÃO INICIADO (próximos incrementos) | — |
