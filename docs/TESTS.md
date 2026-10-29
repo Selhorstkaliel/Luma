@@ -52,7 +52,7 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 | ID | Critério | Como | Estado | Evidência |
 |---|---|---|---|---|
 | F4-U01 | `luma-jogos` gera só comandos Flatpak de usuário, recusa app desconhecido e não usa RPM Fusion | `tests/unit/test_jogos.py` (`--simular`) | PASSOU (local, 4/4) | — |
-| F4-I01..I03 | GameMode, MangoHud e gamescope na imagem; `luma-jogos` presente; nenhum repositório RPM Fusion | `tests/image/test-image.sh` no CI | PENDENTE (CI) | — |
+| F4-I01..I03 | GameMode, MangoHud e gamescope na imagem; `luma-jogos` presente; nenhum pacote nem repositório **habilitado** do RPM Fusion (os `.repo` desabilitados da base são permitidos; a premissa anterior, "nenhum arquivo", derrubou o ci #21 e o iso #11) | `tests/image/test-image.sh` no CI | PENDENTE (CI) | — |
 | F4-01 | `luma-jogos instalar steam` instala o Steam sem senha e ele abre | VM do usuário | PENDENTE | — |
 | F4-02 | 3 jogos (1 nativo, 2 Proton, sem anticheat) abrem e rodam 10 min | **hardware real** (VM sem 3D) | BLOQUEADO: falta hardware de teste autorizado | — |
 | F4-03 | Variante NVIDIA | — | ADIADO (decisão 0012) | — |

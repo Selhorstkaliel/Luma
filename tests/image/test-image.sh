@@ -91,7 +91,17 @@ desktop_ok() {
 check F3-I03 "Ajustes: lançador .desktop válido" desktop_ok
 check F4-I01 "jogos: gamemoderun, mangohud e gamescope presentes" bash -c 'command -v gamemoderun && command -v mangohud && command -v gamescope'
 check F4-I02 "jogos: luma-jogos gera os comandos Flatpak de usuário" bash -c 'luma-jogos --simular instalar steam | grep -q "flatpak install --user"'
-check F4-I03 "jogos: sem RPM Fusion na imagem (decisão 0012)" bash -c '! ls /etc/yum.repos.d/ | grep -qi rpmfusion'
+# A Kinoite traz arquivos .repo do RPM Fusion DESABILITADOS (fedora-workstation-repositories) [H]; a decisão
+# 0012 proíbe pacotes do RPM Fusion e repositório RPM Fusion habilitado, não os arquivos da base (ci #21).
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+no_rpmfusion() {
+	local repos pkgs
+	repos="$(grep -lis '^enabled *= *1' /etc/yum.repos.d/*rpmfusion*.repo 2>/dev/null || true)"
+	pkgs="$(rpm -qa --qf '%{NAME} %{VENDOR} %{PACKAGER}\n' | grep -i rpmfusion || true)"
+	[ -z "$repos" ] || { echo "repositório RPM Fusion habilitado: $repos" >&2; return 1; }
+	[ -z "$pkgs" ] || { echo "pacotes do RPM Fusion: $pkgs" >&2; return 1; }
+}
+check F4-I03 "jogos: nenhum pacote nem repositório habilitado do RPM Fusion (decisão 0012)" no_rpmfusion
 # Fase 5: controles estáticos de segurança (os dinâmicos, como nmap e AVCs, são da VM: sudo luma-diagnostico)
 # shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
 luma_files_not_world_writable() {
@@ -113,6 +123,9 @@ check F1-I01 "luma-hostname habilitado no boot" enabled luma-hostname.service
 check F1-I02 "luma-diagnostico instalado" test -x /usr/bin/luma-diagnostico
 default_lnf || true
 launchers_exist || true
+echo "--- arquivos RPM Fusion da base (evidência) ---"
+for f in /etc/yum.repos.d/*rpmfusion*.repo; do [ -e "$f" ] && echo "$f: $(grep -ci '^enabled *= *1' "$f") seção(ões) habilitada(s)"; done
+no_rpmfusion || true
 echo "--- luma-ajustes --verificar (evidência) ---"; QT_QPA_PLATFORM=offscreen HOME=/tmp luma-ajustes --verificar 2>&1 | tail -n 20 || true
 
 echo "falhas: $fails"
