@@ -107,7 +107,7 @@ while kill -0 "$qemu_pid" 2>/dev/null; do
 			"LUMACI BEGIN"*) begun=yes; log "${l#LUMACI }" ;;
 			"LUMACI RESULT "*|"LUMACI END"*|"LUMACI AVISO"*) log "${l#LUMACI }" ;;
 			# Detalhes que só iam para o serial (o artefato nem sempre dá para baixar)
-			"LUMACI DATA AVC "*|"LUMACI DATA AJUSTES "*|"LUMACI DATA FAILED "*|"LUMACI DATA PLASMALOGIN "*) log "${l#LUMACI DATA }" ;;
+			"LUMACI DATA AVC "*|"LUMACI DATA AJUSTES "*|"LUMACI DATA FAILED "*|"LUMACI DATA PLASMALOGIN "*|"LUMACI DATA SESSAOENV "*|"LUMACI DATA WELCOME "*) log "${l#LUMACI DATA }" ;;
 		esac
 	done
 	sleep 2; t=$((t + 2))
@@ -139,8 +139,21 @@ grep -Eqi 'Ol[aá], Luma|Lume' <<<"$(ocr lume-ola)" && results+=$'\n'"F7-01-OCR 
 grep -Eqi 'Ajustes|Apar[eê]ncia|Settings' <<<"$(ocr ajustes-aberto)" && results+=$'\n'"F3-01-OCR PASSOU janela do Ajustes" \
 	|| results+=$'\n'"F3-01-OCR FALHOU OCR: $(ocr ajustes-aberto | cut -c1-200)"
 results+=$'\n'"F2-03 INFO capturas boot-06s/12s/20s anexadas (logotipo sem texto: conferência visual)"
-grep -Eqi 'steam|sign in|updating|valve' <<<"$(ocr steam)" && results+=$'\n'"F4-01-OCR PASSOU janela do Steam" \
-	|| results+=$'\n'"F4-01-OCR FALHOU OCR: $(ocr steam | cut -c1-200)"
+# Steam: a janela de login ou de atualização, e não o aviso de sessão sem DISPLAY (run iso #19 deu falso
+# PASSOU porque o aviso também tem a palavra "Steam")
+if grep -Eqi 'requires a correctly|DISPLAY environment' <<<"$(ocr steam)"; then
+	results+=$'\n'"F4-01 FALHOU o Steam mostrou o aviso de sessão sem DISPLAY: $(ocr steam | cut -c1-200)"
+elif grep -Eqi 'sign in|iniciar sess|entrar|updating|atualizando|steam' <<<"$(ocr steam)"; then
+	results+=$'\n'"F4-01 PASSOU janela do Steam (OCR) depois de luma-jogos instalar steam"
+else
+	results+=$'\n'"F4-01 FALHOU janela do Steam não reconhecida: $(ocr steam | cut -c1-200)"
+fi
+# Marca: nenhuma tela do usuário novo apresenta o sistema como Fedora (decisão 0010)
+if grep -Eqi 'fedora' <<<"$(ocr desktop-usuario-novo) $(ocr boas-vindas)"; then
+	results+=$'\n'"F2-06 FALHOU tela do usuário novo diz Fedora: $(ocr boas-vindas | cut -c1-200)"
+else
+	results+=$'\n'"F2-06 PASSOU nenhuma menção a Fedora na área de trabalho e nas boas-vindas (OCR)"
+fi
 grep -aq '^LUMACI END' <(tr -d '\r' <"$s") || results+=$'\n'"ROTEIRO FALHOU o roteiro de dentro da VM não chegou ao fim"
 {
 	echo "teste do sistema instalado (ISO de teste com kickstart do CI, QEMU + OVMF Secure Boot) $(date -u +%FT%TZ)"

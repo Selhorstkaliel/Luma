@@ -84,6 +84,11 @@ done
 sleep 45   # deixa o Plasma terminar de montar painéis e papel de parede (llvmpipe, sem 3D)
 res RAM INFO "$(free -m | awk '/^Mem:/{print "usada="$3"MiB total="$2"MiB"}') (60 s após o login, sem apps abertos)"
 shot desktop-usuario-novo
+# Boas-vindas do primeiro login (run iso #19: "Bem-vindo ao Fedora!"); o host confere a marca por OCR
+sleep 5
+shot boas-vindas
+dump WELCOME pgrep -a -u "$U" -f welcome
+pkill -u "$U" -f plasma-welcome || true
 lnf="$(kread kdeglobals KDE LookAndFeelPackage)"
 scheme="$(kread kdeglobals General ColorScheme)"
 deco="$(kread kwinrc org.kde.kdecoration2 theme)"
@@ -187,12 +192,17 @@ has="$(asuser flatpak --user list --app --columns=application 2>/dev/null | grep
 res JOGOS-INSTALAR INFO "instalado=$inst app=${has:-ausente} em $(( $(date +%s) - t0 )) s; fim do log: $(tail -n 3 /var/luma-ci/jogos.log | tr '\n' ' ' | cut -c1-200)"
 steam_vivo=no
 if [ -n "$has" ]; then
-	asuser flatpak run com.valvesoftware.Steam >/var/luma-ci/steam.log 2>&1 &
+	# Pelo gerenciador de serviços do usuário, com o ambiente da sessão (DISPLAY do Xwayland), como o menu
+	# abre. Run iso #19: aberto direto pelo runuser, sem DISPLAY, o Steam só mostrou o aviso de sessão.
+	envs="$(asuser systemctl --user show-environment 2>&1 | grep -E '^(DISPLAY|WAYLAND_DISPLAY|XDG_SESSION_TYPE)=' || true)"
+	dump SESSAOENV echo "${envs:-sem DISPLAY nem WAYLAND_DISPLAY no ambiente do systemd --user}"
+	asuser systemd-run --user --collect --quiet --unit=luma-ci-steam flatpak run com.valvesoftware.Steam >/var/luma-ci/steam.log 2>&1
 	for _ in $(seq 1 24); do sleep 10; done   # o Steam baixa o próprio cliente na primeira execução
 	pgrep -u "$U" -f 'steam' >/dev/null && steam_vivo=yes
 	shot steam
 fi
-res F4-01 "$([ -n "$has" ] && [ "$steam_vivo" = yes ] && echo PASSOU || echo FALHOU)" "instalado=$inst em-execucao=$steam_vivo (o host confere a janela por OCR)"
+# O veredito do F4-01 é do host (OCR da janela): processo vivo não basta, o aviso de erro também é um processo
+res JOGOS-ABRIR INFO "instalado=$inst processo=$steam_vivo"
 
 # --- AVCs e diagnóstico completo (F5-02, F1-09) -----------------------------------------------------------
 avc="$(ausearch -m avc,user_avc -ts boot 2>/dev/null | grep -c 'type=.*AVC' || true)"

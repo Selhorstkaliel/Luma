@@ -144,6 +144,9 @@ check F5-I03 "zona luma sem alvo ACCEPT (entrada recusada por padrão)" zone_not
 check F5-I04 "luma-diagnostico mede boot, RAM e AVCs" grep -q 'ausearch -m avc' /usr/bin/luma-diagnostico
 check F1-I01 "luma-hostname habilitado no boot" enabled luma-hostname.service
 check F1-I02 "luma-diagnostico instalado" test -x /usr/bin/luma-diagnostico
+# Unidades da base que falhavam em todo boot (run iso #19): pulam por condição em vez de falhar
+check F1-I03 "mcelog pulado em AMD e remount-fs pulado com raiz composefs" test -f /usr/lib/systemd/system/mcelog.service.d/luma-amd.conf -a -f /usr/lib/systemd/system/systemd-remount-fs.service.d/luma-composefs.conf
+check F2-I11 "sem as boas-vindas do Fedora (Bem-vindo ao Fedora!)" bash -c '! rpm -q plasma-welcome-fedora'
 default_lnf || true
 launchers_exist || true
 echo "--- arquivos RPM Fusion da base (evidência) ---"

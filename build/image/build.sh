@@ -50,6 +50,12 @@ ln -sfn ../usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
 [ -e /usr/share/zoneinfo/America/Sao_Paulo ] || { echo "luma: fuso America/Sao_Paulo ausente" >&2; exit 1; }
 grep -qix 'pt_BR.utf8' <<<"$(locale -a)" || { echo "luma: locale pt_BR.UTF-8 ausente após glibc-langpack-pt" >&2; exit 1; }
 
+# Boas-vindas do Fedora: no primeiro login a janela dizia "Bem-vindo ao Fedora!" (run iso #19), fora da
+# marca Luma (decisão 0010). [H] As páginas vêm do plasma-welcome-fedora; sai se existir. A boas-vindas
+# própria do Luma é o F3-03. A evidência no log diz o que sobrou.
+if rpm -q plasma-welcome-fedora >/dev/null 2>&1; then dnf -y remove plasma-welcome-fedora; fi
+echo "luma: pacotes de boas-vindas restantes: $(rpm -qa '*welcome*' | tr '\n' ' ')"
+
 # Marca: sem logos do Fedora (decisão 0010). generic-logos fornece o mesmo "system-logos" com arte neutra.
 dnf -y swap fedora-logos generic-logos
 ! rpm -q fedora-logos >/dev/null 2>&1 || { echo "fedora-logos continua instalado" >&2; exit 1; }
