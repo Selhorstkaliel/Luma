@@ -1,0 +1,5 @@
+# Primeiro programa Lume com janela: o critério de aceite da Fase 7
+let w = ui.window("Olá do Lume")
+w.label("Olá, Luma!")
+w.show()
+ui.run()

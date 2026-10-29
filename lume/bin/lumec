@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
+"""Lançador do lumec a partir do repositório: põe lume/ no caminho de importação (lumec e lume_runtime)."""
+import sys
+from pathlib import Path
+
+LUME = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(LUME))
+
+from lumec.cli import main  # noqa: E402
+
+sys.exit(main())

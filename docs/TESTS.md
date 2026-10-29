@@ -78,5 +78,13 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 | F6-05 | Marca Luma no Anaconda (logos/cores) | — | NÃO INICIADO; hoje só o nome do produto é Luma-OS | — |
 | F6-06 | Canal de atualização assinado | — | BLOQUEADO: decisão 0009 (usuário: "ainda não", 2026-10-29) | — |
 
+## Fase 7 (Lume 0.1, decisão 0013)
+| ID | Critério | Como | Estado | Evidência |
+|---|---|---|---|---|
+| F7-U01 | Lexer, parser e verificador (posições, precedência, erros) | `lume/tests/test_lume_frontend.py` | PASSOU (local, 12/12) | — |
+| F7-U02 | Semântica do Python gerado (recursão, laços, closures, if/else if, nomes reservados, erro de execução com linha do .lume) | `lume/tests/test_lume_semantics.py` | PASSOU (local, 9/9) | — |
+| F7-I01 | Janela do `ola.lume` e botão do `contador.lume` funcionam sem tela, com o PySide6 do Fedora | CI, job imagem, `test_lume_ui.py` com `LUME_EXIGIR_QT=1` | PENDENTE (CI); localmente pulado por falta de PySide6 | — |
+| F7-01 | "hello world" Lume com janela Qt no Luma (critério da Fase 7) | VM: `python3 lume/bin/lumec run lume/examples/ola.lume` | PENDENTE | — |
+
 ## Regressão herdada do LUMA-OS
 Os critérios E1–E9 do LUMA-OS (`docs/TESTS.md` dele) servem de checklist das Fases 1, 2, 5 e 6. Cada um precisa passar de novo no Fedora ou ter a exceção registrada na decisão correspondente.

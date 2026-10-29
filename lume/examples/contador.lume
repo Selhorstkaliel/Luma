@@ -1,0 +1,13 @@
+# Janela com um botão que conta cliques (função como callback, closure sobre `count`)
+let count = 0
+let w = ui.window("Contador Lume")
+let display = w.label("Cliques: 0")
+
+fn on_click() {
+    count = count + 1
+    display.set_text("Cliques: " + str(count))
+}
+
+w.button("Clique aqui", on_click)
+w.show()
+ui.run()

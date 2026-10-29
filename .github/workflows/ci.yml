@@ -35,6 +35,10 @@ jobs:
         run: podman build --build-arg FEDORA_VERSION=${{ matrix.fedora }} -t localhost/luma:${{ matrix.fedora }} .
       - name: Testes da imagem
         run: podman run --rm -v "$PWD/tests/image:/t:ro" localhost/luma:${{ matrix.fedora }} /t/test-image.sh
+      - name: Lume - testes de interface dentro da imagem (PySide6 do Fedora, sem tela; F7-I01)
+        run: |
+          podman run --rm -v "$PWD:/src:ro" -e QT_QPA_PLATFORM=offscreen -e LUME_EXIGIR_QT=1 -e HOME=/tmp localhost/luma:${{ matrix.fedora }} \
+            python3 -B /src/lume/tests/test_lume_ui.py -v
       - name: qmllint dentro da imagem (F1-07; coleta de evidência, ainda não bloqueia)
         continue-on-error: true
         run: |
