@@ -9,6 +9,10 @@ on:
       - Containerfile
       - build/**
       - configs/**
+      - themes/**
+      - plasma/**
+      - icons/**
+      - wallpapers/**
       - scripts/lab/**
       - scripts/ci/boot-iso.sh
       - .github/workflows/iso.yml
@@ -69,7 +73,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: luma-${{ env.LUMA_VERSION }}-iso-pre-alpha
+          # Commit no nome: artefatos de runs diferentes não se confundem no download
+          name: luma-${{ env.LUMA_VERSION }}-${{ github.sha }}-iso-pre-alpha
           path: |
             ${{ env.OUT }}/*.iso
             ${{ env.OUT }}/*.sha256

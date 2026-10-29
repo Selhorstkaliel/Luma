@@ -20,18 +20,21 @@ LIGHT = dict(
     sel="203,221,253", sel_alt="216,225,245", sel_fg="27,29,38", sel_inactive="70,78,98",
     sel_link="4,80,200", sel_visited="98,52,180", sel_neg="170,20,22", sel_neu="130,66,0", sel_pos="2,100,38",
 )
+# Escuro = Midnight: fundos e acento medidos no mockup Midnight (mediana de regiões, docs/design/midnight-tokens.md).
+# Seleção usa o azul da lista selecionada do mockup (#324B7B), não o acento puro: texto branco sobre
+# #2777FB fica em 4,1:1, abaixo do AA.
 DARK = dict(
-    window="32,40,64", window_alt="34,41,56", view="19,26,54", view_alt="20,26,40",
-    button="34,41,56", button_alt="30,62,128", header="19,26,54", header_alt="32,40,64",
-    tooltip="32,45,69",
-    fg="231,233,240", inactive="166,172,191", active="123,173,255", link="123,173,255", visited="190,160,255",
-    neg="255,138,138", neu="240,180,90", pos="95,208,143", focus="91,155,255",
-    sel="30,62,128", sel_alt="32,40,64", sel_fg="255,255,255", sel_inactive="214,222,245",
-    sel_link="255,226,160", sel_visited="236,222,255", sel_neg="255,214,214", sel_neu="255,232,190", sel_pos="214,255,228",
+    window="14,20,27", window_alt="19,24,33", view="9,15,22", view_alt="14,20,27",
+    button="30,37,51", button_alt="37,42,60", header="8,13,25", header_alt="14,20,27",
+    tooltip="30,37,51",
+    fg="231,233,240", inactive="166,172,191", active="123,173,255", link="123,173,255", visited="240,128,200",
+    neg="255,138,138", neu="240,180,90", pos="95,208,143", focus="63,142,247",
+    sel="50,75,123", sel_alt="31,42,62", sel_fg="255,255,255", sel_inactive="214,222,245",
+    sel_link="255,226,160", sel_visited="255,214,240", sel_neg="255,214,214", sel_neu="255,232,190", sel_pos="214,255,228",
 )
 # Áreas complementares (OSD, telas de bloqueio/logout) são escuras nos dois modos
 COMPLEMENTARY = dict(
-    bg="15,34,69", alt="19,26,54", fg="231,233,240", inactive="166,172,191", link="123,173,255",
+    bg="8,13,25", alt="14,20,27", fg="231,233,240", inactive="166,172,191", link="123,173,255",
     visited="190,160,255", neg="255,138,138", neu="240,180,90", pos="95,208,143",
 )
 
@@ -107,6 +110,6 @@ def render(name, name_pt, c):
 
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
-    for name, pt, tokens in (("LumaLight", "Luma Claro", LIGHT), ("LumaDark", "Luma Escuro", DARK)):
+    for name, pt, tokens in (("LumaLight", "Luma Claro", LIGHT), ("LumaDark", "Luma Midnight", DARK)):
         (OUT / f"{name}.colors").write_text(render(name, pt, tokens), encoding="utf-8", newline="\n")
         print(f"escrito {name}.colors")

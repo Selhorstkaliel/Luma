@@ -21,9 +21,9 @@ THEMES = {
     "Luma": dict(name="Luma Claro", title="#E1E9F7", title_inactive="#EEF2FA", border="#C7D3EC",
                  text="#1B1D26", text_inactive="#6B7186", shadow="#1E3A78", shadow_op=0.18,
                  off="#C4CBDA", glyph="#4A1010"),
-    "LumaEscuro": dict(name="Luma Escuro", title="#131A36", title_inactive="#1A2140", border="#2A3456",
+    "LumaEscuro": dict(name="Luma Midnight", title="#0E141B", title_inactive="#131821", border="#1E2533",
                        text="#E7E9F0", text_inactive="#9AA1B6", shadow="#000000", shadow_op=0.45,
-                       off="#3A4260", glyph="#2B0808"),
+                       off="#2E3648", glyph="#2B0808"),
 }
 BUTTONS = {"close": "#FD4D56", "minimize": "#FECB18", "maximize": "#2CD656", "restore": "#2CD656"}
 GLYPHS = {  # desenhados só no estado "hover", como nos sistemas de referência
