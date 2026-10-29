@@ -8,7 +8,7 @@ Atualizado em 2026-10-28. Plano: [PLANO-MESTRE.md](PLANO-MESTRE.md). Testes: [TE
 | 1: Fedora Core | **EM ANDAMENTO**, falta só o que depende da VM do usuário. Feito: imagem testada no CI (22 verificações), ISO gerada no CI, smoke test de boot com OCR, hostname `luma`, comando `luma-diagnostico`. Falta: `sudo luma-diagnostico` na VM (F1-06, F1-08, F1-09), boot com Secure Boot (F1-05), `sha256sum` (F1-02), `bootc upgrade`/`rollback` (depende de registro, decisão 0009) e varredura nmap da VM. Exceção conhecida: a ISO depende do bootc-image-builder arquivado (motivo da falha do `bootc-installer` passa a sair no manifesto) |
 | 2: Midnight Desktop | **EM ANDAMENTO**, falta só a revisão visual na VM do usuário. Na imagem: tema Luma escuro por padrão com paleta Midnight medida no mockup, decoração de janelas, barra superior e dock, Papirus, Inter, `generic-logos`, tela de boot Plymouth Luma, modo desempenho (`luma-appearance desempenho`). Fora: tela de login (o Plasma Login Manager do F44 não aceita tema próprio) e marca do instalador (Fase 6). Falta: F2-01, F2-03 e F2-04 na VM e as capturas de referência |
 | 3: Luma Apps | **EM ANDAMENTO**. Incremento 1: o app Ajustes (PySide6 + Kirigami) entra na imagem e volta ao dock, com autoteste da interface no CI; a Central de Controle está na barra superior desde a Fase 2. Próximos: Boas-vindas (Plasma Setup) e presets do Monitor do Sistema |
-| 4: Gaming | NÃO INICIADA (`luma-windows-run` portado; bug do `wineboot` herdado e não investigado) |
+| 4: Gaming | **EM ANDAMENTO** (decisão 0012). Incremento 1: GameMode, MangoHud e gamescope do Fedora na imagem; `luma-jogos` e atalho "Jogos" instalam Steam, Lutris, Heroic e Bottles via Flathub, sem root e sem RPM Fusion. NVIDIA adiada. Medição de jogos exige hardware real |
 | 5: Segurança e desempenho | NÃO INICIADA (zona firewalld `luma` criada; teste por nmap pendente) |
 | 6: Instalador e atualizações | NÃO INICIADA |
 | 7: Lume SDK | BLOQUEADA: o compilador lumec ainda não existe (informação do usuário) |
@@ -24,9 +24,7 @@ A edição Fedora nasceu neste repositório a partir de `Selhorstkaliel/LUMA-OS@
 
 ## Decisões pendentes do usuário (plano §12)
 1. Publicar no GHCR e assinar com cosign (0009).
-2. Pré-configurar o Flathub (0004 reaberta).
-3. Origem do driver NVIDIA (akmods do ublue ou pipeline própria).
-4. Steam e codecs na imagem ou opt-in.
+2. ~~Flathub~~, ~~NVIDIA~~, ~~Steam e codecs~~: decididos em 2026-10-29 (decisão 0012).
 5. Hardware de teste (SSD externo ou máquina descartável). Instalar no notebook principal continua proibido sem autorização específica.
 6. Nome e logotipo definitivos (0010).
 7. Arquivar o LUMA-OS. O `STATUS.md` dele diz "repositório privado", mas o repositório está público [F].

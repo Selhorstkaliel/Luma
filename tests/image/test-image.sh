@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Testes da imagem construída, executados DENTRO do container (sem boot):
 #   podman run --rm -v "$PWD/tests/image:/t:ro,z" localhost/luma:44 /t/test-image.sh
-# Confere o que as Fases 0 a 3 prometem. O que só o boot comprova (getenforce, nmap) é teste de VM (docs/TESTS.md).
+# Confere o que as Fases 0 a 4 prometem. O que só o boot comprova (getenforce, nmap) é teste de VM (docs/TESTS.md).
 set -uo pipefail
 fails=0
 check() {
@@ -89,6 +89,9 @@ desktop_ok() {
 	if command -v desktop-file-validate >/dev/null; then desktop-file-validate "$f"; else grep -qx 'Exec=luma-ajustes' "$f"; fi
 }
 check F3-I03 "Ajustes: lançador .desktop válido" desktop_ok
+check F4-I01 "jogos: gamemoderun, mangohud e gamescope presentes" bash -c 'command -v gamemoderun && command -v mangohud && command -v gamescope'
+check F4-I02 "jogos: luma-jogos gera os comandos Flatpak de usuário" bash -c 'luma-jogos --simular instalar steam | grep -q "flatpak install --user"'
+check F4-I03 "jogos: sem RPM Fusion na imagem (decisão 0012)" bash -c '! ls /etc/yum.repos.d/ | grep -qi rpmfusion'
 check F1-I01 "luma-hostname habilitado no boot" enabled luma-hostname.service
 check F1-I02 "luma-diagnostico instalado" test -x /usr/bin/luma-diagnostico
 default_lnf || true

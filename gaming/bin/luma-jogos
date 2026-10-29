@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-or-later
+# luma-jogos: instala, sob demanda e sem root, as lojas e lançadores de jogos via Flathub (decisão 0012).
+# A imagem não traz Steam nem RPM Fusion; GameMode, MangoHud e gamescope vêm do Fedora na imagem.
+#   luma-jogos instalar [steam] [lutris] [heroic] [bottles]   (sem nomes: todos)
+#   luma-jogos status
+#   luma-jogos --simular instalar ...   (só imprime os comandos; usado nos testes)
+set -euo pipefail
+FLATHUB=https://dl.flathub.org/repo/flathub.flatpakrepo
+declare -A APPS=(
+	[steam]=com.valvesoftware.Steam
+	[lutris]=net.lutris.Lutris
+	[heroic]=com.heroicgameslauncher.hgl
+	[bottles]=com.usebottles.bottles
+)
+ORDER=(steam lutris heroic bottles)
+
+simular=""
+if [ "${1:-}" = --simular ]; then simular=1; shift; fi
+run() { if [ -n "$simular" ]; then echo "$*"; else "$@"; fi; }
+
+usage() {
+	echo "uso: luma-jogos instalar [steam] [lutris] [heroic] [bottles] | luma-jogos status" >&2
+	echo "  instalar   adiciona o Flathub (só para o seu usuário) e instala os apps escolhidos (padrão: todos)" >&2
+	echo "             bottles = programas e jogos do Windows fora do Steam" >&2
+	exit 64
+}
+
+[ "$(id -u)" != 0 ] || [ -n "$simular" ] || { echo "luma-jogos: rode com o seu usuário, sem sudo" >&2; exit 77; }
+
+case "${1:-}" in
+	instalar)
+		shift
+		names=("$@"); [ ${#names[@]} -gt 0 ] || names=("${ORDER[@]}")
+		ids=()
+		for n in "${names[@]}"; do
+			[ -n "${APPS[$n]:-}" ] || { echo "luma-jogos: app desconhecido: $n" >&2; usage; }
+			ids+=("${APPS[$n]}")
+		done
+		run flatpak remote-add --user --if-not-exists flathub "$FLATHUB"
+		run flatpak install --user --noninteractive flathub "${ids[@]}"
+		[ -n "$simular" ] || echo "luma-jogos: instalado: ${names[*]}. Os ícones aparecem no menu de aplicativos."
+		;;
+	status)
+		for n in "${ORDER[@]}"; do
+			if flatpak info --user "${APPS[$n]}" >/dev/null 2>&1; then s=instalado; else s="não instalado"; fi
+			printf '%-8s %s (%s)\n' "$n" "$s" "${APPS[$n]}"
+		done
+		for t in gamemoderun mangohud gamescope; do
+			if command -v "$t" >/dev/null; then echo "$t: presente"; else echo "$t: ausente"; fi
+		done
+		;;
+	*) usage ;;
+esac

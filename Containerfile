@@ -29,6 +29,9 @@ COPY apps/settings/luma_ajustes/ /usr/share/luma-ajustes/luma_ajustes/
 COPY apps/settings/data/luma-ajustes /usr/bin/luma-ajustes
 COPY apps/settings/data/org.luma.ajustes.desktop /usr/share/applications/org.luma.ajustes.desktop
 COPY apps/settings/data/luma-ajustes.1 /usr/share/man/man1/luma-ajustes.1
+# Jogos (Fase 4): lojas via Flathub sob demanda, sem RPM Fusion na imagem (decisão 0012)
+COPY gaming/bin/luma-jogos /usr/bin/luma-jogos
+COPY gaming/data/org.luma.jogos.desktop /usr/share/applications/org.luma.jogos.desktop
 COPY build/image/ /tmp/luma-build/
 RUN LUMA_VERSION="${LUMA_VERSION}" FEDORA_VERSION="${FEDORA_VERSION}" /tmp/luma-build/build.sh && \
     rm -rf /tmp/luma-build

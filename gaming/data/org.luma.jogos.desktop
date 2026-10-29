@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Games
+Name[pt_BR]=Jogos
+GenericName=Install Steam, Lutris, Heroic and Bottles
+GenericName[pt_BR]=Instalar Steam, Lutris, Heroic e Bottles
+Comment=Installs game stores from Flathub for your user, without administrator password
+Comment[pt_BR]=Instala as lojas de jogos do Flathub para o seu usuário, sem senha de administrador
+Icon=applications-games
+Exec=konsole --hold -e luma-jogos instalar
+Terminal=false
+Categories=Game;
+Keywords=steam;lutris;heroic;bottles;jogos;games;

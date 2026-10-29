@@ -25,6 +25,12 @@ dnf -y install papirus-icon-theme rsms-inter-fonts
 # App Ajustes (Fase 3): PySide6 do Fedora; o Kirigami (QML) já vem com o Plasma da base
 dnf -y install python3-pyside6
 
+# Jogos (Fase 4, decisão 0012): só ferramentas dos repositórios do Fedora; Steam e lojas via Flathub (luma-jogos)
+dnf -y install gamemode mangohud gamescope
+# Regras udev de controles (Steam Controller, DualShock etc.); o pacote pode não existir no Fedora [H]
+dnf -y install --skip-unavailable steam-devices
+echo "luma: steam-devices $(rpm -q steam-devices 2>/dev/null || echo 'indisponível no Fedora')"
+
 # Marca: sem logos do Fedora (decisão 0010). generic-logos fornece o mesmo "system-logos" com arte neutra.
 dnf -y swap fedora-logos generic-logos
 ! rpm -q fedora-logos >/dev/null 2>&1 || { echo "fedora-logos continua instalado" >&2; exit 1; }

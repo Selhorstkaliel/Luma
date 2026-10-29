@@ -48,5 +48,14 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 | F3-02 | Central de Controle (barra superior) mostra Wi-Fi, Bluetooth, Não perturbe, brilho e volume | VM | PENDENTE | — |
 | F3-03 | Boas-vindas (extensão do Plasma Setup) e presets do Monitor do Sistema | — | NÃO INICIADO (próximos incrementos) | — |
 
+## Fase 4 (incremento 1: ferramentas de jogo e lojas via Flatpak, decisão 0012)
+| ID | Critério | Como | Estado | Evidência |
+|---|---|---|---|---|
+| F4-U01 | `luma-jogos` gera só comandos Flatpak de usuário, recusa app desconhecido e não usa RPM Fusion | `tests/unit/test_jogos.py` (`--simular`) | PASSOU (local, 4/4) | — |
+| F4-I01..I03 | GameMode, MangoHud e gamescope na imagem; `luma-jogos` presente; nenhum repositório RPM Fusion | `tests/image/test-image.sh` no CI | PENDENTE (CI) | — |
+| F4-01 | `luma-jogos instalar steam` instala o Steam sem senha e ele abre | VM do usuário | PENDENTE | — |
+| F4-02 | 3 jogos (1 nativo, 2 Proton, sem anticheat) abrem e rodam 10 min | **hardware real** (VM sem 3D) | BLOQUEADO: falta hardware de teste autorizado | — |
+| F4-03 | Variante NVIDIA | — | ADIADO (decisão 0012) | — |
+
 ## Regressão herdada do LUMA-OS
 Os critérios E1–E9 do LUMA-OS (`docs/TESTS.md` dele) servem de checklist das Fases 1, 2, 5 e 6. Cada um precisa passar de novo no Fedora ou ter a exceção registrada na decisão correspondente.
