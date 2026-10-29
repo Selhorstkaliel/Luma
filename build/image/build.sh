@@ -14,6 +14,8 @@ firewall-offline-cmd --set-default-zone=luma >/dev/null
 zone="$(firewall-offline-cmd --get-default-zone)"
 [ "$zone" = luma ] || { echo "zona padrão do firewalld é '$zone', esperado 'luma'" >&2; exit 1; }
 systemctl enable firewalld.service
+# Hostname genérico do instalador vira o padrão Luma, uma vez (configs/usr/libexec/luma/luma-hostname)
+systemctl enable luma-hostname.service
 
 # Tema (Fase 2, incremento 1): ícones Papirus (GPL-3.0) e fonte Inter (OFL-1.1) usados pelos pacotes Look-and-Feel
 dnf -y install papirus-icon-theme rsms-inter-fonts

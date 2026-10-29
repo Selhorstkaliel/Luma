@@ -1,0 +1,13 @@
+[Unit]
+Description=Luma: hostname padrão no lugar do genérico do instalador
+After=local-fs.target
+Before=network-pre.target NetworkManager.service
+Wants=network-pre.target
+ConditionPathExists=!/var/lib/luma/hostname-ajustado
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/luma/luma-hostname
+
+[Install]
+WantedBy=multi-user.target

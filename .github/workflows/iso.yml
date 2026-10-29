@@ -62,7 +62,7 @@ jobs:
           df -h / /mnt
       - name: Smoke test de boot (QEMU + OVMF com Secure Boot)
         run: |
-          sudo apt-get update -q && sudo apt-get install -y -q qemu-system-x86 qemu-utils ovmf socat
+          sudo apt-get update -q && sudo apt-get install -y -q qemu-system-x86 qemu-utils ovmf socat tesseract-ocr
           sudo scripts/ci/boot-iso.sh "$OUT/luma-$LUMA_VERSION-x86_64.iso" "$OUT/boot" 240
       - name: Preparar artefato
         if: always()

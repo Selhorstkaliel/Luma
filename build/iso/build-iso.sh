@@ -27,11 +27,12 @@ run_tool() {
 }
 [ "$storage" = /var/lib/containers/storage ] || echo "AVISO: armazenamento em $storage; o image-builder espera /var/lib/containers/storage" >&2
 
-tool="$IB_IMAGE"; type=bootc-installer; dir="$out/ib-bootc-installer"
+tool="$IB_IMAGE"; type=bootc-installer; dir="$out/ib-bootc-installer"; ib_fail=""
 if ! run_tool "$IB_IMAGE" "$dir" "$out/image-builder-bootc-installer.log" \
 	build --bootc-ref "$installer" --bootc-installer-payload-ref "$payload" --output-dir /output bootc-installer; then
 	echo "bootc-installer falhou (log em $out/image-builder-bootc-installer.log); tentando anaconda-iso do bootc-image-builder" >&2
 	tail -n 30 "$out/image-builder-bootc-installer.log" >&2
+	ib_fail="$(tail -n 3 "$out/image-builder-bootc-installer.log" | tr '\n' ' ' | cut -c1-300)"
 	podman pull -q "$BIB_IMAGE" >/dev/null || { echo "build-iso.sh: $BIB_IMAGE indisponível" >&2; exit 1; }
 	tool="$BIB_IMAGE"; type=anaconda-iso; dir="$out/bib-anaconda-iso"
 	if ! run_tool "$BIB_IMAGE" "$dir" "$out/bootc-image-builder-anaconda-iso.log" \
@@ -55,6 +56,7 @@ rm -rf "$out/ib-bootc-installer" "$out/bib-anaconda-iso"
 	echo "tamanho_bytes: $(stat -c %s "$out/$name")"
 	echo "tipo: $type"
 	echo "ferramenta: $tool@$tool_digest"
+	[ -z "$ib_fail" ] || echo "bootc_installer_falhou: $ib_fail"
 	echo "imagem_luma: $payload@$(podman image inspect "$payload" --format '{{.Digest}}')"
 	echo "imagem_instalador: $installer@$(podman image inspect "$installer" --format '{{.Digest}}')"
 	echo "data: $(date -u +%FT%TZ)"

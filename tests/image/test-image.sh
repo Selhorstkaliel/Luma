@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Testes da imagem construída, executados DENTRO do container (sem boot):
 #   podman run --rm -v "$PWD/tests/image:/t:ro,z" localhost/luma:44 /t/test-image.sh
-# Confere o que as Fases 0 e 2 prometem. O que só o boot comprova (getenforce, nmap) é teste de VM (docs/TESTS.md).
+# Confere o que as Fases 0, 1 e 2 prometem. O que só o boot comprova (getenforce, nmap) é teste de VM (docs/TESTS.md).
 set -uo pipefail
 fails=0
 check() {
@@ -72,6 +72,8 @@ check F2-I05 "LookAndFeelPackage padrão = org.luma.dark.desktop" default_lnf
 check F2-I06 "dependências do tema (Papirus-Dark, fonte Inter)" test -d /usr/share/icons/Papirus-Dark -a -n "$(fc-list Inter family)"
 check F2-I07 "sem fedora-logos" bash -c '! rpm -q fedora-logos'
 check F2-I08 "lançadores do dock existem na imagem" launchers_exist
+check F1-I01 "luma-hostname habilitado no boot" enabled luma-hostname.service
+check F1-I02 "luma-diagnostico instalado" test -x /usr/bin/luma-diagnostico
 default_lnf || true
 launchers_exist || true
 

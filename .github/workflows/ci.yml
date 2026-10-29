@@ -35,6 +35,15 @@ jobs:
         run: podman build --build-arg FEDORA_VERSION=${{ matrix.fedora }} -t localhost/luma:${{ matrix.fedora }} .
       - name: Testes da imagem
         run: podman run --rm -v "$PWD/tests/image:/t:ro" localhost/luma:${{ matrix.fedora }} /t/test-image.sh
+      - name: qmllint dentro da imagem (F1-07; coleta de evidência, ainda não bloqueia)
+        continue-on-error: true
+        run: |
+          podman run --rm -v "$PWD:/src:ro" localhost/luma:${{ matrix.fedora }} bash -c '
+            dnf -y -q install qt6-qtdeclarative-devel >/dev/null
+            q="$(command -v qmllint-qt6 || ls /usr/lib64/qt6/bin/qmllint)"
+            cd /src && git_qml=$(find plasma apps -name "*.qml" | sort)
+            echo "qmllint: $q"; "$q" --version || true
+            "$q" $git_qml'
       - name: Manifesto de pacotes
         run: |
           podman run --rm localhost/luma:${{ matrix.fedora }} rpm -qa --qf '%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n' | sort > manifest.txt

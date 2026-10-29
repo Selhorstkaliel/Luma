@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Troca, uma única vez, o hostname genérico gravado pelo instalador ("fedora", localhost ou vazio) pelo
+# padrão do Luma (DEFAULT_HOSTNAME do os-release). Um nome escolhido pelo usuário é preservado.
+# Motivo: na VM do usuário (2026-10-28) o sistema instalado ficou com hostname "fedora" (docs/TESTS.md, F1-06).
+# LUMA_ROOT permite testar fora do sistema (tests/unit/test_hostname.py).
+set -euo pipefail
+root="${LUMA_ROOT:-}"
+flag="$root/var/lib/luma/hostname-ajustado"
+[ -e "$flag" ] && exit 0
+default="$(sed -n 's/^DEFAULT_HOSTNAME=//p' "$root/usr/lib/os-release" | tr -d '"')"
+default="${default:-luma}"
+current="$(tr -d '[:space:]' < "$root/etc/hostname" 2>/dev/null || true)"
+case "$current" in
+	""|fedora|localhost|localhost.localdomain)
+		printf '%s\n' "$default" > "$root/etc/hostname"
+		if [ -z "$root" ]; then hostname "$default" || true; fi
+		echo "luma-hostname: '${current:-vazio}' -> '$default'"
+		;;
+	*) echo "luma-hostname: '$current' escolhido pelo usuário; mantido" ;;
+esac
+mkdir -p "$(dirname "$flag")"
+: > "$flag"

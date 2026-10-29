@@ -6,7 +6,7 @@ cd "$(dirname "$0")/../.."
 rc=0
 
 # Scripts shell: *.sh e executáveis sem extensão listados explicitamente
-mapfile -t sh_files < <(git ls-files -co --exclude-standard -- '*.sh' 'themes/bin/*' 'apps/settings/data/luma-ajustes' 'gaming/wine/luma-windows-run')
+mapfile -t sh_files < <(git ls-files -co --exclude-standard -- '*.sh' 'themes/bin/*' 'apps/settings/data/luma-ajustes' 'gaming/wine/luma-windows-run' 'configs/usr/bin/*' 'configs/usr/libexec/luma/*')
 for f in "${sh_files[@]}"; do bash -n "$f" || { echo "sintaxe: $f"; rc=1; }; done
 if command -v shellcheck >/dev/null; then
 	shellcheck -x "${sh_files[@]}" || rc=1
