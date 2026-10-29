@@ -17,6 +17,8 @@ on:
       - gaming/**
       - scripts/lab/**
       - scripts/ci/boot-iso.sh
+      # O iso roda os testes da imagem antes de gerar a ISO: mudança neles também precisa de ISO nova
+      - tests/image/**
       - .github/workflows/iso.yml
 permissions:
   contents: read
