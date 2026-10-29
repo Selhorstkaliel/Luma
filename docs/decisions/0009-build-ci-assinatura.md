@@ -18,3 +18,6 @@ O host de desenvolvimento tem 7,7 GiB de RAM, e o WSL já travou durante um buil
 ## Consequências
 - Sem publicação, a atualização de uma máquina de teste é feita a partir de uma imagem local (`bootc switch --transport containers-storage`) [H].
 - A reprodutibilidade é comparada pelo manifesto (`rpm -qa`) entre builds, como na 0005 do LUMA-OS. Não se promete reprodução bit a bit.
+
+## Atualização em 2026-10-29
+Perguntado de novo, com as consequências explicadas (imagem pública e permanente no GHCR, chave cosign gerada pelo usuário e guardada como segredo do repositório). Resposta do usuário: **"ainda não"**. Continua sem registro e sem assinatura. Atualização assinada e reversão (TESTS F5-05) seguem BLOQUEADAS por esta decisão.
