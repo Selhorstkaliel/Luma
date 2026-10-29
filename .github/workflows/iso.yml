@@ -19,6 +19,8 @@ on:
       - scripts/ci/boot-iso.sh
       # O iso roda os testes da imagem antes de gerar a ISO: mudança neles também precisa de ISO nova
       - tests/image/**
+      - tests/vm/**
+      - scripts/ci/vm-test.sh
       - .github/workflows/iso.yml
 permissions:
   contents: read
@@ -31,7 +33,7 @@ concurrency:
 jobs:
   iso:
     runs-on: ubuntu-24.04
-    timeout-minutes: 150
+    timeout-minutes: 210
     env:
       FEDORA_VERSION: "44"
       LUMA_VERSION: "0.9.0-dev"
@@ -90,4 +92,25 @@ jobs:
             ${{ env.OUT }}/boot/
           retention-days: 7
           compression-level: 0
+          if-no-files-found: warn
+      # Daqui para baixo: teste do sistema INSTALADO (critérios que antes só a VM do usuário cobria). Roda depois
+      # do upload para a ISO do usuário não depender dele. A ISO de teste (kickstart destrutivo do CI) fica fora
+      # de qualquer artefato e é apagada logo após a instalação.
+      - name: Liberar a ISO já enviada do disco
+        run: sudo rm -f "$OUT"/*.iso
+      - name: Teste do sistema instalado (instalação sem interação, Secure Boot, sessão, nmap, Steam, Lume)
+        run: |
+          sudo apt-get install -y -q dnsmasq-base nmap
+          ev="$(dirname "$OUT")/luma-vm-evidencias"; echo "EV=$ev" >> "$GITHUB_ENV"
+          sudo WORK_DIR="$(dirname "$OUT")/luma-vm-test" scripts/ci/vm-test.sh \
+            localhost/luma:$FEDORA_VERSION localhost/luma-installer:$FEDORA_VERSION "$ev"
+      - name: Preparar evidências do sistema instalado
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" "$EV" 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: luma-${{ env.LUMA_VERSION }}-${{ github.sha }}-evidencias-vm
+          path: ${{ env.EV }}/
+          retention-days: 7
           if-no-files-found: warn

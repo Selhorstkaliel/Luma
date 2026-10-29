@@ -1,0 +1,13 @@
+# Só na instalação de teste do CI (tests/vm/ks-ci.sh). Roda os critérios de VM e desliga a máquina.
+[Unit]
+Description=Luma CI: critérios de VM do sistema instalado
+After=graphical.target plasmalogin.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/bash /etc/luma-ci/luma-ci-checks.sh
+StandardOutput=journal
+
+[Install]
+WantedBy=graphical.target

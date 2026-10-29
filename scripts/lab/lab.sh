@@ -149,6 +149,10 @@ qemu_args() {
 		-device virtio-serial -chardev "socket,path=$QGA_SOCK,server=on,wait=off,id=qga0"
 		-device "virtserialport,chardev=qga0,name=org.qemu.guest_agent.0")
 	[ "$VM_SECUREBOOT" = 1 ] && a+=(-global "driver=cfi.pflash01,property=secure,value=on")
+	# VM_TAP=ifname: segunda placa numa tap já criada no host, para varrer a VM "de fora" (nmap) sem passar
+	# pela NAT da rede user (teste do CI, scripts/ci/vm-test.sh). Fica no fim para não mudar os endereços PCI.
+	[ -n "${VM_TAP:-}" ] && a+=(-netdev "tap,id=n1,ifname=$VM_TAP,script=no,downscript=no"
+		-device "virtio-net-pci,netdev=n1,mac=52:54:00:4c:55:4d")
 	# BOOT_ISO: mídia óptica no controlador AHCI embutido (não altera endereços PCI)
 	# cache=none: lê a ISO sem encher o cache de páginas do WSL (LUMA-OS, etapa 8 falha1: host sem memória)
 	# bootindex=0: a mídia inicia antes do disco mesmo com sistema já instalado (equivale ao menu de boot do PC)

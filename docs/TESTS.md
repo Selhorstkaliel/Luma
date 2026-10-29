@@ -52,7 +52,7 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 | ID | Critério | Como | Estado | Evidência |
 |---|---|---|---|---|
 | F4-U01 | `luma-jogos` gera só comandos Flatpak de usuário, recusa app desconhecido e não usa RPM Fusion | `tests/unit/test_jogos.py` (`--simular`) | PASSOU (local, 4/4) | — |
-| F4-I01..I03 | GameMode, MangoHud e gamescope na imagem; `luma-jogos` presente; nenhum pacote nem repositório **habilitado** do RPM Fusion (os `.repo` desabilitados da base são permitidos; a premissa anterior, "nenhum arquivo", derrubou o ci #21 e o iso #11) | `tests/image/test-image.sh` no CI | PENDENTE (CI) | — |
+| F4-I01..I03 | GameMode, MangoHud e gamescope na imagem; `luma-jogos` presente; nenhum pacote nem repositório **habilitado** do RPM Fusion (os `.repo` desabilitados da base são permitidos; a premissa anterior, "nenhum arquivo", derrubou o ci #21 e o iso #11) | `tests/image/test-image.sh` no CI | PASSOU (2026-10-29: ci #22 = ce190d2, ci #24, ci #25 e iso #14; o passo sai com erro se qualquer verificação falhar) | — |
 | F4-01 | `luma-jogos instalar steam` instala o Steam sem senha e ele abre | VM do usuário | PENDENTE | — |
 | F4-02 | 3 jogos (1 nativo, 2 Proton, sem anticheat) abrem e rodam 10 min | **hardware real** (VM sem 3D) | BLOQUEADO: falta hardware de teste autorizado | — |
 | F4-03 | Variante NVIDIA | — | ADIADO (decisão 0012) | — |
@@ -71,7 +71,7 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 | ID | Critério | Como | Estado | Evidência |
 |---|---|---|---|---|
 | F6-U01 | Kickstart da ISO sem comando destrutivo nem modo automático | `tests/unit/test_installer.py` sobre `build/iso/config.toml` | PASSOU (local, 2/2) | — |
-| F6-01 | O instalador para na tela de resumo e espera o usuário (não apaga o disco sozinho) | CI `iso`: OCR aos 240 s deve achar "INSTALLATION SUMMARY"/"RESUMO DA INSTALAÇÃO"; "INSTALLATION PROGRESS" sem interação reprova | PENDENTE (CI) [H: o Anaconda com kickstart incompleto para na tela de resumo] | — |
+| F6-01 | O instalador para na tela de resumo e espera o usuário (não apaga o disco sozinho) | CI `iso`: OCR aos 240 s deve achar "INSTALLATION SUMMARY"/"RESUMO DA INSTALAÇÃO"; "INSTALLATION PROGRESS" sem interação reprova | PASSOU (2026-10-29, run iso #14 = 40887691891, commit 36b943c, OVMF com Secure Boot): veredito INSTALADOR; OCR aos 240 s: "INSTALLATION SUMMARY ... Installation Destination ... Root account is disabled ... No user will be created ... Begin installation  We won't touch your disks until you click 'Begin Installation'". Observação [H]: a interface apareceu em inglês e o indicador de teclado em "us" no OCR; se o kickstart `lang`/`keyboard` vale para o sistema instalado é o F6-02 | — |
 | F6-02 | Idioma pt-BR, teclado br e hostname `luma` vêm do kickstart | VM | PENDENTE | — |
 | F6-03 | Recuperação documentada (rollback, entrada anterior do GRUB, TTY, reinstalação) | `docs/usuario/recuperacao.md` | ESCRITO; os passos de rollback estão BLOQUEADOS pela decisão 0009 (não há segunda versão) | — |
 | F6-04 | Dual boot com Windows em disco virtual | VM com Windows | PENDENTE | — |
@@ -83,8 +83,24 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 |---|---|---|---|---|
 | F7-U01 | Lexer, parser e verificador (posições, precedência, erros) | `lume/tests/test_lume_frontend.py` | PASSOU (local, 12/12) | — |
 | F7-U02 | Semântica do Python gerado (recursão, laços, closures, if/else if, nomes reservados, erro de execução com linha do .lume) | `lume/tests/test_lume_semantics.py` | PASSOU (local, 9/9) | — |
-| F7-I01 | Janela do `ola.lume` e botão do `contador.lume` funcionam sem tela | `test_lume_ui.py` (offscreen) | PASSOU localmente (2026-10-29, PySide6 6.12.0 via pip, Qt offscreen, 2/2: título e visibilidade da janela; 2 cliques → "Cliques: 2"). No CI, dentro da imagem com o `python3-pyside6` do Fedora: PENDENTE | — |
+| F7-I01 | Janela do `ola.lume` e botão do `contador.lume` funcionam sem tela | `test_lume_ui.py` (offscreen) | PASSOU localmente (2026-10-29, PySide6 6.12.0 via pip, Qt offscreen, 2/2: título e visibilidade da janela; 2 cliques → "Cliques: 2"). No CI, dentro da imagem com o `python3-pyside6` do Fedora: PASSOU (ci #24 = 40883325392 e ci #25 = 40887691692; o passo sai com erro se o Qt faltar, `LUME_EXIGIR_QT=1`) | — |
 | F7-01 | "hello world" Lume com janela Qt no Luma (critério da Fase 7) | VM: `python3 lume/bin/lumec run lume/examples/ola.lume` | PENDENTE | — |
+
+## Teste do sistema instalado no CI (desde 2026-10-29)
+Os critérios marcados "VM" acima passam a ter uma execução automática no workflow `iso`, depois do envio da ISO do usuário (`scripts/ci/vm-test.sh`):
+- uma ISO **de teste** é gerada com o kickstart do CI (`tests/vm/ks-ci.sh`): o kickstart real, mais apagar o disco virtual, o usuário `teste` e o desligamento no fim. Essa ISO nunca vai para artefato e é apagada logo após a instalação;
+- a instalação roda sem interação no QEMU com OVMF, Secure Boot e chaves Microsoft;
+- o sistema instalado liga com o login automático do usuário novo. `tests/vm/guest/luma-ci-checks.sh` confere por dentro: hostname, SELinux, Secure Boot, zona, idioma, teclado e fuso; Look-and-Feel, painéis e Central de Controle; os comandos do Ajustes como usuário, sem senha; o modo desempenho; `lumec run ola.lume`; `luma-jogos instalar steam` e o Steam abrindo; os AVCs; e o `luma-diagnostico`;
+- o host faz as capturas com OCR e o `nmap -p-` de fora, por uma tap só com o host, com um serviço escutando na 8080 da VM.
+
+Limites declarados:
+- é a instalação **automática**, não a interativa da ISO entregue; ela é a mesma, menos as escolhas da tela de resumo;
+- o login é automático (`/etc/plasmalogin.conf` só na instalação de teste);
+- os comandos de teste rodam como o usuário, via `runuser`, e não pelos cliques no dock;
+- sem 3D (llvmpipe);
+- a revisão visual continua sendo humana: as capturas vão no artefato `…-evidencias-vm`.
+
+Resultado: PENDENTE (primeira execução no próximo run `iso`).
 
 ## Regressão herdada do LUMA-OS
 Os critérios E1–E9 do LUMA-OS (`docs/TESTS.md` dele) servem de checklist das Fases 1, 2, 5 e 6. Cada um precisa passar de novo no Fedora ou ter a exceção registrada na decisão correspondente.
