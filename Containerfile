@@ -24,6 +24,11 @@ COPY configs/usr/ /usr/
 COPY configs/etc/ /etc/
 COPY --from=tema /out/usr/ /usr/
 COPY themes/bin/luma-appearance /usr/bin/luma-appearance
+# App Ajustes (Fase 3): módulo Python + QML; PySide6 entra pelo build.sh
+COPY apps/settings/luma_ajustes/ /usr/share/luma-ajustes/luma_ajustes/
+COPY apps/settings/data/luma-ajustes /usr/bin/luma-ajustes
+COPY apps/settings/data/org.luma.ajustes.desktop /usr/share/applications/org.luma.ajustes.desktop
+COPY apps/settings/data/luma-ajustes.1 /usr/share/man/man1/luma-ajustes.1
 COPY build/image/ /tmp/luma-build/
 RUN LUMA_VERSION="${LUMA_VERSION}" FEDORA_VERSION="${FEDORA_VERSION}" /tmp/luma-build/build.sh && \
     rm -rf /tmp/luma-build

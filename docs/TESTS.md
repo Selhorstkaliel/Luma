@@ -40,5 +40,13 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 | F2-05 | Tela de login com visual Luma | — | NÃO SE APLICA no F44: o Plasma Login Manager não aceita tema próprio (fixo no Breeze, proposta de mudança do Fedora 44). A tela de **bloqueio** usa o papel de parede Luma (`/etc/xdg/kscreenlockerrc`) | https://fedoraproject.org/wiki/Changes/PlasmaLoginManager |
 | F2-02 | Paleta Midnight medida no mockup aplicada ao esquema escuro, com contraste AA | `tests/unit/test_theme.py` + `docs/design/midnight-tokens.md` | PASSOU na parte automática (2026-10-29): tokens medidos no mockup (mediana por região) e aplicados ao `LumaDark` e ao Aurorae `LumaEscuro`; 16/16 testes de tema, incluindo contraste AA. Revisão visual na VM PENDENTE | `docs/design/midnight-tokens.md` |
 
+## Fase 3 (incremento 1: app Ajustes na imagem)
+| ID | Critério | Como | Estado | Evidência |
+|---|---|---|---|---|
+| F3-I01..I03 | PySide6 e `luma_ajustes` importam; a interface QML (Kirigami) carrega sem tela (`luma-ajustes --verificar`, offscreen); `.desktop` válido | `tests/image/test-image.sh` no CI | PENDENTE (CI) | — |
+| F3-01 | Ajustes abre pelo dock e aplica claro/escuro, destaque, animações, texto e transparência sem pedir senha | VM, usuário novo | PENDENTE | — |
+| F3-02 | Central de Controle (barra superior) mostra Wi-Fi, Bluetooth, Não perturbe, brilho e volume | VM | PENDENTE | — |
+| F3-03 | Boas-vindas (extensão do Plasma Setup) e presets do Monitor do Sistema | — | NÃO INICIADO (próximos incrementos) | — |
+
 ## Regressão herdada do LUMA-OS
 Os critérios E1–E9 do LUMA-OS (`docs/TESTS.md` dele) servem de checklist das Fases 1, 2, 5 e 6. Cada um precisa passar de novo no Fedora ou ter a exceção registrada na decisão correspondente.

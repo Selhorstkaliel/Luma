@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Testes da imagem construída, executados DENTRO do container (sem boot):
 #   podman run --rm -v "$PWD/tests/image:/t:ro,z" localhost/luma:44 /t/test-image.sh
-# Confere o que as Fases 0, 1 e 2 prometem. O que só o boot comprova (getenforce, nmap) é teste de VM (docs/TESTS.md).
+# Confere o que as Fases 0 a 3 prometem. O que só o boot comprova (getenforce, nmap) é teste de VM (docs/TESTS.md).
 set -uo pipefail
 fails=0
 check() {
@@ -81,10 +81,19 @@ initramfs_has_luma() {
 }
 check F2-I09 "tela de boot: tema Plymouth padrão = luma" test "$(plymouth-set-default-theme)" = luma
 check F2-I10 "tema Plymouth luma dentro do initramfs" initramfs_has_luma
+check F3-I01 "Ajustes: PySide6 e módulo luma_ajustes importam" env PYTHONPATH=/usr/share/luma-ajustes python3 -c "import PySide6.QtQml, luma_ajustes.core, luma_ajustes.app"
+check F3-I02 "Ajustes: interface QML (Kirigami) carrega" env QT_QPA_PLATFORM=offscreen HOME=/tmp luma-ajustes --verificar
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+desktop_ok() {
+	local f=/usr/share/applications/org.luma.ajustes.desktop
+	if command -v desktop-file-validate >/dev/null; then desktop-file-validate "$f"; else grep -qx 'Exec=luma-ajustes' "$f"; fi
+}
+check F3-I03 "Ajustes: lançador .desktop válido" desktop_ok
 check F1-I01 "luma-hostname habilitado no boot" enabled luma-hostname.service
 check F1-I02 "luma-diagnostico instalado" test -x /usr/bin/luma-diagnostico
 default_lnf || true
 launchers_exist || true
+echo "--- luma-ajustes --verificar (evidência) ---"; QT_QPA_PLATFORM=offscreen HOME=/tmp luma-ajustes --verificar 2>&1 | tail -n 20 || true
 
 echo "falhas: $fails"
 exit $((fails > 0))

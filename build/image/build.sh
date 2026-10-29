@@ -22,6 +22,9 @@ dnf -y install papirus-icon-theme rsms-inter-fonts
 # Sem pipe: com pipefail, "fc-list | grep -q" falha por SIGPIPE quando acha (run ci 40634925786)
 [ -n "$(fc-list Inter family)" ] || { echo "fonte Inter não encontrada após instalar rsms-inter-fonts" >&2; exit 1; }
 
+# App Ajustes (Fase 3): PySide6 do Fedora; o Kirigami (QML) já vem com o Plasma da base
+dnf -y install python3-pyside6
+
 # Marca: sem logos do Fedora (decisão 0010). generic-logos fornece o mesmo "system-logos" com arte neutra.
 dnf -y swap fedora-logos generic-logos
 ! rpm -q fedora-logos >/dev/null 2>&1 || { echo "fedora-logos continua instalado" >&2; exit 1; }

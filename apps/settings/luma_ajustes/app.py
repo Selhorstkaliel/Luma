@@ -126,4 +126,8 @@ def main() -> int:
     engine.load(QUrl.fromLocalFile(str(Path(__file__).with_name("qml") / "Main.qml")))
     if not engine.rootObjects():
         return 1
+    if "--verificar" in sys.argv[1:]:
+        # Autoteste (testes da imagem, com QT_QPA_PLATFORM=offscreen): a interface carregou; sai sem abrir a janela
+        print("luma-ajustes: interface carregada")
+        return 0
     return app.exec()

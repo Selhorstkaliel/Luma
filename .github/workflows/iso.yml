@@ -13,6 +13,7 @@ on:
       - plasma/**
       - icons/**
       - wallpapers/**
+      - apps/**
       - scripts/lab/**
       - scripts/ci/boot-iso.sh
       - .github/workflows/iso.yml
@@ -20,7 +21,9 @@ permissions:
   contents: read
 concurrency:
   group: iso-${{ github.ref }}
-  cancel-in-progress: true
+  # Não cancela o run em andamento: o usuário pode estar esperando aquela ISO. O push novo espera na fila
+  # (só o mais recente fica pendente).
+  cancel-in-progress: false
 
 jobs:
   iso:
