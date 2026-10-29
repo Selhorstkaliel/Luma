@@ -56,6 +56,13 @@ res F6-02 "$ok" "LANG=$lang teclado=[$keymap] fuso=$tz"
 dump OSRELEASE cat /etc/os-release
 dump BOOTC bootc status
 dump FAILED systemctl --failed --no-legend
+# Por que falharam (run iso #18: mcelog e systemd-remount-fs)
+for u in $(systemctl --failed --no-legend --plain | awk '{print $1}'); do
+	dump FAILED journalctl -b -u "$u" --no-pager -n 15 -o cat
+done
+dump FAILED cat /etc/fstab
+nfail="$(systemctl --failed --no-legend --plain | wc -l)"
+res F1-10 "$([ "$nfail" = 0 ] && echo PASSOU || echo FALHOU)" "unidades com falha no boot: $nfail ($(systemctl --failed --no-legend --plain | awk '{print $1}' | tr '\n' ' '))"
 res BOOT INFO "$(systemd-analyze 2>&1 | head -n1)"
 
 # --- Sessão do usuário novo (F2-01) ------------------------------------------------------------------------
@@ -189,8 +196,23 @@ res F4-01 "$([ -n "$has" ] && [ "$steam_vivo" = yes ] && echo PASSOU || echo FAL
 
 # --- AVCs e diagnóstico completo (F5-02, F1-09) -----------------------------------------------------------
 avc="$(ausearch -m avc,user_avc -ts boot 2>/dev/null | grep -c 'type=.*AVC' || true)"
-res F5-02 "$([ "${avc:-0}" = 0 ] && echo PASSOU || echo FALHOU)" "AVCs desde o boot (sessão, Ajustes, Lume, luma-jogos, Steam): ${avc:-0}"
-[ "${avc:-0}" = 0 ] || dump AVC ausearch -m avc,user_avc -ts boot -i
+# Cada AVC com o evento inteiro (SYSCALL: exe e ppid; PROCTITLE: a linha de comando) para saber quem foi.
+# Do Luma = programa, linha de comando ou contexto com "luma"/"lume"; o resto é da base Fedora (comparação
+# com a Kinoite pura: F5-03). Run iso #18: 8 AVCs mac_admin de chcon em tuned_t e initrc_t, no boot.
+luma_avc=0; base_avc=0; resumo=""
+for id in $(ausearch -m avc,user_avc -ts boot --format raw 2>/dev/null | grep -o 'audit([0-9.]*:[0-9]*)' | sed 's/.*://; s/)//' | sort -un); do
+	ev="$(ausearch -a "$id" -i 2>/dev/null)"
+	dom="$(grep -o 'scontext=[^ ]*' <<<"$ev" | head -n1 | cut -d: -f3)"
+	exe="$(grep -o ' exe=[^ ]*' <<<"$ev" | head -n1 | cut -d= -f2)"
+	cmd="$(sed -n 's/.*proctitle=//p' <<<"$ev" | head -n1 | cut -c1-120)"
+	if grep -qiE 'lum[ae]' <<<"$dom $exe $cmd"; then luma_avc=$((luma_avc + 1)); quem=LUMA; else base_avc=$((base_avc + 1)); quem=base; fi
+	resumo+="$quem:$dom:${exe##*/}; "
+	say "DATA AVC [$quem] id=$id dominio=$dom exe=$exe cmd=$cmd"
+done
+if [ "${avc:-0}" = 0 ]; then st=PASSOU
+elif [ "$luma_avc" -gt 0 ]; then st=FALHOU
+else st=PARCIAL; fi
+res F5-02 "$st" "AVCs desde o boot: ${avc:-0} (do Luma: $luma_avc; da base: $base_avc) $resumo"
 luma-diagnostico >/dev/null 2>&1; rc=$?
 res F1-09 "$([ "$rc" = 0 ] && [ -s /var/tmp/luma-diagnostico.txt ] && echo PASSOU || echo FALHOU)" "sudo luma-diagnostico rc=$rc"
 dump DIAG cat /var/tmp/luma-diagnostico.txt

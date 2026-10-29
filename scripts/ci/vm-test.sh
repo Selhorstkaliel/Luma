@@ -111,6 +111,8 @@ while kill -0 "$qemu_pid" 2>/dev/null; do
 		esac
 	done
 	sleep 2; t=$((t + 2))
+	# Tecla a cada 2 min: sem ela o Plasma bloqueia a tela aos 5 min e a captura pega a senha (run iso #18)
+	if [ $((t % 120)) = 0 ]; then "$LAB" key shift >/dev/null 2>&1 || true; fi
 	if [ $((t % 300)) = 0 ]; then capture "sistema-$((t / 60))min"; log "tela aos $((t / 60)) min (OCR): $(ocr "sistema-$((t / 60))min" | cut -c1-300)"; fi
 	# Sem o roteiro em 15 min não adianta esperar o prazo inteiro (run iso #15 esperou 70 min à toa)
 	if [ "$begun" = no ] && [ "$t" -ge 900 ]; then
@@ -144,4 +146,6 @@ grep -aq '^LUMACI END' <(tr -d '\r' <"$s") || results+=$'\n'"ROTEIRO FALHOU o ro
 	echo "teste do sistema instalado (ISO de teste com kickstart do CI, QEMU + OVMF Secure Boot) $(date -u +%FT%TZ)"
 	sed '/^$/d' <<<"$results"
 } | tee "$ev/resultado.txt"
+# PARCIAL não reprova o job (ex.: AVCs só da base Fedora), mas aparece como aviso no resumo do run
+{ grep ' PARCIAL ' "$ev/resultado.txt" || true; } | while IFS= read -r l; do echo "::warning::$l"; done
 ! grep -q ' FALHOU ' <(sed 's/^/ /' "$ev/resultado.txt")
