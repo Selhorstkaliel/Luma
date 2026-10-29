@@ -14,8 +14,8 @@ ev="$(realpath -m "${3:?}")"
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 LAB="$ROOT/scripts/lab/lab.sh"
 [ "$(id -u)" = 0 ] || { echo "vm-test.sh: execute como root" >&2; exit 77; }
-[ -e /dev/kvm ] || { echo "::warning::/dev/kvm ausente: teste do sistema instalado NÃO EXECUTADO" | tee "$ev/resultado.txt"; exit 0; }
 mkdir -p "$ev/capturas"
+[ -e /dev/kvm ] || { echo "::warning::/dev/kvm ausente: teste do sistema instalado NÃO EXECUTADO" | tee "$ev/resultado.txt"; exit 0; }
 work="${WORK_DIR:-/var/tmp/luma-vm-test}"
 rm -rf "$work"; mkdir -p "$work/iso" "$work/srv/sync"
 export LAB_DIR="$work/lab" VM_NAME=ci-instalado VM_NET=1 VM_AUDIO=0 VM_RAM_MB=6144 VM_CPUS=4
@@ -35,6 +35,7 @@ cleanup() {
 	cp -f "$(serial)" "$ev/serial-sistema.log" 2>/dev/null || true
 }
 trap cleanup EXIT
+ocr() { tr '\n' ' ' <"$ev/capturas/$1.txt" 2>/dev/null || true; }
 # Captura com OCR (texto ao lado da imagem)
 capture() {
 	"$LAB" screenshot "$ev/capturas/$1.png" >/dev/null 2>&1 || { log "captura $1 falhou"; return 0; }
@@ -70,10 +71,11 @@ if ! wait_qemu "$qemu_pid" 3000 instalacao; then
 	exit 1
 fi
 cp -f "$(serial)" "$ev/serial-instalacao.log" 2>/dev/null || true
-grep -a 'luma-ci:' "$ev/serial-instalacao.log" | tee -a "$ev/vm-test.log" || true
-grep -aq 'luma-ci: instalado em' "$ev/serial-instalacao.log" || { log "o %post do CI não encontrou o sistema instalado"; exit 1; }
+grep -a 'luma-ci-diag:' "$ev/serial-instalacao.log" | tee -a "$ev/vm-test.log" || true
 rm -f "$iso"
 log "instalação terminou; ISO de teste apagada"
+# Roteiro e login automático entram com o disco desligado (no %post do instalador falhou no run iso #15)
+"$ROOT/tests/vm/prepare-disk.sh" "$LAB_DIR/vms/$VM_NAME/disk.qcow2" 2>&1 | tee -a "$ev/vm-test.log"
 
 # --- 3. Sistema instalado ----------------------------------------------------------------------------------
 git -C "$ROOT" archive --format=tar.gz -o "$work/srv/lume.tar.gz" HEAD lume
@@ -87,7 +89,7 @@ VM_TAP=luma0 "$LAB" run & qemu_pid=$!
 sleep 6; capture boot-06s
 sleep 6; capture boot-12s
 sleep 8; capture boot-20s
-done_n=0; t=0; limit=4200
+done_n=0; t=0; limit=4200; begun=no
 while kill -0 "$qemu_pid" 2>/dev/null; do
 	mapfile -t lines < <(complete_lines | grep -a '^LUMACI ' || true)
 	while [ "$done_n" -lt "${#lines[@]}" ]; do
@@ -100,10 +102,17 @@ while kill -0 "$qemu_pid" 2>/dev/null; do
 				nmap -Pn -sS -p- -T4 --open "$ip_vm" >"$ev/nmap-tcp.txt" 2>&1 || true
 				nmap -Pn -sS -p 8080 "$ip_vm" >"$ev/nmap-8080.txt" 2>&1 || true
 				touch "$work/srv/sync/nmap-done" ;;
-			"LUMACI RESULT "*|"LUMACI BEGIN"*|"LUMACI END"*|"LUMACI AVISO"*) log "${l#LUMACI }" ;;
+			"LUMACI BEGIN"*) begun=yes; log "${l#LUMACI }" ;;
+			"LUMACI RESULT "*|"LUMACI END"*|"LUMACI AVISO"*) log "${l#LUMACI }" ;;
 		esac
 	done
 	sleep 2; t=$((t + 2))
+	if [ $((t % 300)) = 0 ]; then capture "sistema-$((t / 60))min"; log "tela aos $((t / 60)) min (OCR): $(ocr "sistema-$((t / 60))min" | cut -c1-300)"; fi
+	# Sem o roteiro em 15 min não adianta esperar o prazo inteiro (run iso #15 esperou 70 min à toa)
+	if [ "$begun" = no ] && [ "$t" -ge 900 ]; then
+		log "o roteiro não começou em 15 min; fim do serial:"; complete_lines | tail -n 30 | tee -a "$ev/vm-test.log" >&2 || true
+		capture sem-roteiro; log "tela (OCR): $(ocr sem-roteiro | cut -c1-300)"; break
+	fi
 	[ "$t" -ge "$limit" ] && { log "sistema instalado: prazo de ${limit}s esgotado"; capture prazo; break; }
 done
 cleanup
@@ -112,13 +121,12 @@ trap - EXIT
 # --- 4. Veredito -------------------------------------------------------------------------------------------
 s="$ev/serial-sistema.log"
 results="$(tr -d '\r' <"$s" | grep -a '^LUMACI RESULT ' | sed 's/^LUMACI RESULT //' || true)"
-ocr() { tr '\n' ' ' <"$ev/capturas/$1.txt" 2>/dev/null || true; }
 # F5-01 de fora: nenhuma porta aberta e a 8080 (com serviço escutando lá dentro) não aberta
 if grep -q 'Nmap done' "$ev/nmap-tcp.txt" 2>/dev/null && ! grep -Eq '^[0-9]+/tcp +open' "$ev/nmap-tcp.txt" \
 	&& ! grep -Eq '^8080/tcp +open' "$ev/nmap-8080.txt"; then
-	results+=$'\n'"F5-01 PASSOU nmap -p- de fora: nenhuma porta aberta; 8080 $(grep -Eo '^8080/tcp +[a-z|]+' "$ev/nmap-8080.txt" | tr -s ' ') com serviço escutando"
+	results+=$'\n'"F5-01 PASSOU nmap -p- de fora: nenhuma porta aberta; 8080 $(grep -Eo '^8080/tcp +[a-z|]+' "$ev/nmap-8080.txt" | tr -s ' ' || true) com serviço escutando"
 else
-	results+=$'\n'"F5-01 FALHOU $(grep -E '^[0-9]+/tcp|Nmap done|Failed|0 hosts' "$ev/nmap-tcp.txt" 2>/dev/null | tr '\n' ' ')"
+	results+=$'\n'"F5-01 FALHOU $(grep -E '^[0-9]+/tcp|Nmap done|Failed|0 hosts' "$ev/nmap-tcp.txt" 2>/dev/null | tr '\n' ' ' || echo 'nmap não executado')"
 fi
 grep -Eqi 'Ol[aá], Luma|Lume' <<<"$(ocr lume-ola)" && results+=$'\n'"F7-01-OCR PASSOU janela com o texto do ola.lume" \
 	|| results+=$'\n'"F7-01-OCR FALHOU OCR: $(ocr lume-ola | cut -c1-200)"
