@@ -9,11 +9,32 @@ set -eu
 
 usage() {
 	echo "uso: luma-appearance claro|escuro [--reset-layout]" >&2
+	echo "     luma-appearance desempenho ligado|desligado" >&2
 	echo "  --reset-layout  recria painel superior e dock e aplica o papel de parede Luma" >&2
+	echo "  desempenho      modo leve: sem desfoque, sem transparência extra e sem animações (PC fraco, VM)" >&2
 	exit 64
 }
 
+# Modo desempenho reduzido (Fase 2): efeitos do KWin desligados e animações zeradas. "desligado" remove
+# as chaves e volta aos padrões do Plasma. Só altera a configuração do usuário atual.
+desempenho() {
+	case "$1" in
+		ligado|on)
+			kwriteconfig6 --file kwinrc --group Plugins --key blurEnabled false
+			kwriteconfig6 --file kwinrc --group Plugins --key contrastEnabled false
+			kwriteconfig6 --file kdeglobals --group KDE --key AnimationDurationFactor 0 ;;
+		desligado|off)
+			kwriteconfig6 --file kwinrc --group Plugins --key blurEnabled --delete
+			kwriteconfig6 --file kwinrc --group Plugins --key contrastEnabled --delete
+			kwriteconfig6 --file kdeglobals --group KDE --key AnimationDurationFactor --delete ;;
+		*) usage ;;
+	esac
+	qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
+	echo "luma-appearance: modo desempenho $1"
+}
+
 [ $# -ge 1 ] || usage
+if [ "$1" = desempenho ]; then [ $# -eq 2 ] || usage; desempenho "$2"; exit 0; fi
 case "$1" in
 	claro|light) lnf=org.luma.desktop; scheme=LumaLight; icons=Papirus; deco=Luma ;;
 	escuro|dark) lnf=org.luma.dark.desktop; scheme=LumaDark; icons=Papirus-Dark; deco=LumaEscuro ;;

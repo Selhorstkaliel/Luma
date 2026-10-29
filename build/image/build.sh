@@ -25,6 +25,10 @@ dnf -y install papirus-icon-theme rsms-inter-fonts
 # Marca: sem logos do Fedora (decisão 0010). generic-logos fornece o mesmo "system-logos" com arte neutra.
 dnf -y swap fedora-logos generic-logos
 ! rpm -q fedora-logos >/dev/null 2>&1 || { echo "fedora-logos continua instalado" >&2; exit 1; }
+
+# Tela de boot Luma (Plymouth) e initramfs regenerado; antes da limpeza do dnf (pode instalar o spinner)
+"$HERE/plymouth.sh"
+
 dnf clean all
 # Resíduo do dnf em /var e /run vira aviso do bootc container lint (run ci 40635971059); /var é do sistema instalado
 rm -rf /var/lib/dnf /var/cache/libdnf5 /var/log/dnf5.log* /run/dnf
@@ -48,6 +52,7 @@ echo "--- XDG_CONFIG_DIRS e LookAndFeelPackage definidos pela base ---"
 grep -rsn 'XDG_CONFIG_DIRS' /etc/profile.d /etc/xdg/plasma-workspace/env || true
 grep -rsn 'LookAndFeelPackage' /etc/xdg /usr/share/kde-settings || true
 echo "---"
+
 
 # SELinux continua enforcing (padrão do Fedora); falhar se a base vier diferente
 grep -qx 'SELINUX=enforcing' /etc/selinux/config || { echo "SELinux não está enforcing em /etc/selinux/config" >&2; exit 1; }

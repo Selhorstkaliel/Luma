@@ -27,4 +27,7 @@ for size in 1366x768 1920x1080 2560x1440 3840x2160; do
 	rsvg-convert -w "$w" -h "$h" ../wallpapers/Luma/src/luma-ondas-escuro.svg -o "$share/wallpapers/Luma/contents/images_dark/$size.png"
 done
 rsvg-convert -w 440 -h 247 ../wallpapers/Luma/src/luma-ondas-claro.svg -o "$share/wallpapers/Luma/contents/screenshot.png"
+# Tela de boot (Plymouth): logotipo Luma; o tema é montado sobre o "spinner" do Fedora em build/image/plymouth.sh
+mkdir -p "$share/plymouth/themes/luma"
+rsvg-convert -w 160 -h 160 ../icons/luma-logo.svg -o "$share/plymouth/themes/luma/watermark.png"
 echo "tema montado em $OUT"

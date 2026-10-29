@@ -72,6 +72,15 @@ check F2-I05 "LookAndFeelPackage padrão = org.luma.dark.desktop" default_lnf
 check F2-I06 "dependências do tema (Papirus-Dark, fonte Inter)" test -d /usr/share/icons/Papirus-Dark -a -n "$(fc-list Inter family)"
 check F2-I07 "sem fedora-logos" bash -c '! rpm -q fedora-logos'
 check F2-I08 "lançadores do dock existem na imagem" launchers_exist
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+initramfs_has_luma() {
+	local img listing
+	img="$(ls /usr/lib/modules/*/initramfs.img)"
+	listing="$(lsinitrd "$img")"
+	grep -q 'plymouth/themes/luma/luma.plymouth' <<<"$listing"
+}
+check F2-I09 "tela de boot: tema Plymouth padrão = luma" test "$(plymouth-set-default-theme)" = luma
+check F2-I10 "tema Plymouth luma dentro do initramfs" initramfs_has_luma
 check F1-I01 "luma-hostname habilitado no boot" enabled luma-hostname.service
 check F1-I02 "luma-diagnostico instalado" test -x /usr/bin/luma-diagnostico
 default_lnf || true
