@@ -158,9 +158,12 @@ lumedir="$home/lume-ci"
 asuser mkdir -p "$lumedir"
 if curl -sf "$HOSTSRV/lume.tar.gz" | asuser tar -xz -C "$lumedir"; then
 	asuser python3 "$lumedir/lume/bin/lumec" run "$lumedir/lume/examples/ola.lume" >/var/luma-ci/lume.log 2>&1 &
-	sleep 15
+	# 25 s e duas capturas: no run iso #20 a janela ainda não estava pintada aos 15 s (llvmpipe, sem 3D)
+	sleep 25
 	vivo=no; pgrep -u "$U" -f 'lumec run' >/dev/null && vivo=yes
 	shot lume-ola
+	sleep 10
+	shot lume-ola-2
 	pkill -u "$U" -f 'lumec run' || true
 	res F7-01 "$([ "$vivo" = yes ] && echo PASSOU || echo FALHOU)" "lumec run ola.lume em execução=$vivo (o host confere o texto da janela por OCR) log=$(head -c 200 /var/luma-ci/lume.log | tr '\n' ' ')"
 else

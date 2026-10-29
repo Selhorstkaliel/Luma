@@ -42,6 +42,10 @@ capture() {
 	if "$LAB" key shift >/dev/null 2>&1; then sleep 2; fi
 	"$LAB" screenshot "$ev/capturas/$1.png" >/dev/null 2>&1 || { log "captura $1 falhou"; return 0; }
 	tesseract "$ev/capturas/$1.png" "$ev/capturas/$1" -l eng >/dev/null 2>&1 || true
+	# Texto pequeno em 1920x1080 escapa do OCR (run iso #20): também lê a captura ampliada 2x, se houver ImageMagick
+	if command -v convert >/dev/null && convert "$ev/capturas/$1.png" -resize 200% "$work/ocr-2x.png" 2>/dev/null; then
+		tesseract "$work/ocr-2x.png" "$work/ocr-2x" -l eng >/dev/null 2>&1 && cat "$work/ocr-2x.txt" >>"$ev/capturas/$1.txt"
+	fi
 }
 # Espera o QEMU terminar (desligamento pelo próprio sistema) com prazo; captura a tela a cada 5 min
 wait_qemu() {
@@ -134,8 +138,8 @@ if grep -q 'Nmap done' "$ev/nmap-tcp.txt" 2>/dev/null && ! grep -Eq '^[0-9]+/tcp
 else
 	results+=$'\n'"F5-01 FALHOU $(grep -E '^[0-9]+/tcp|Nmap done|Failed|0 hosts' "$ev/nmap-tcp.txt" 2>/dev/null | tr '\n' ' ' || echo 'nmap não executado')"
 fi
-grep -Eqi 'Ol[aá], Luma|Lume' <<<"$(ocr lume-ola)" && results+=$'\n'"F7-01-OCR PASSOU janela com o texto do ola.lume" \
-	|| results+=$'\n'"F7-01-OCR FALHOU OCR: $(ocr lume-ola | cut -c1-200)"
+grep -Eqi 'Ol[aá], Luma|Ol[aá] do Lume' <<<"$(ocr lume-ola) $(ocr lume-ola-2)" && results+=$'\n'"F7-01-OCR PASSOU janela com o texto do ola.lume" \
+	|| results+=$'\n'"F7-01-OCR FALHOU OCR: $(ocr lume-ola-2 | cut -c1-200)"
 grep -Eqi 'Ajustes|Apar[eê]ncia|Settings' <<<"$(ocr ajustes-aberto)" && results+=$'\n'"F3-01-OCR PASSOU janela do Ajustes" \
 	|| results+=$'\n'"F3-01-OCR FALHOU OCR: $(ocr ajustes-aberto | cut -c1-200)"
 results+=$'\n'"F2-03 INFO capturas boot-06s/12s/20s anexadas (logotipo sem texto: conferência visual)"
