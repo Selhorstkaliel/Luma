@@ -57,5 +57,15 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 | F4-02 | 3 jogos (1 nativo, 2 Proton, sem anticheat) abrem e rodam 10 min | **hardware real** (VM sem 3D) | BLOQUEADO: falta hardware de teste autorizado | — |
 | F4-03 | Variante NVIDIA | — | ADIADO (decisão 0012) | — |
 
+## Fase 5 (incremento 1: controles estáticos e instrumentos de medição)
+| ID | Critério | Como | Estado | Evidência |
+|---|---|---|---|---|
+| F5-I01..I04 | SSH desligado por padrão; arquivos do Luma não graváveis por todos; zona `luma` sem ACCEPT; `luma-diagnostico` mede boot, RAM e AVCs | `tests/image/test-image.sh` no CI | PENDENTE (CI) | — |
+| F5-01 | Nenhuma porta aberta vista de fora | `sudo nmap -Pn -sS -p- --open <IP da VM>` no host (o `luma-diagnostico` imprime o comando) | PENDENTE (VM) | — |
+| F5-02 | Zero AVCs não explicados após uso normal (sessão, Ajustes, `luma-jogos`) | seção AVC do `sudo luma-diagnostico` | PENDENTE (VM) | — |
+| F5-03 | Boot e RAM ociosa ≤ Kinoite pura +10% / +15% | `luma-diagnostico` no Luma e na Kinoite 44 pura, mesma VM, 3 medições, mediana | PENDENTE: exige as duas VMs | — |
+| F5-04 | Bateria em repouso ≤ Kinoite pura +5% | `upower`, hardware real | BLOQUEADO: hardware | — |
+| F5-05 | Atualização assinada e rollback | — | BLOQUEADO: decisão 0009 (GHCR + cosign) | — |
+
 ## Regressão herdada do LUMA-OS
 Os critérios E1–E9 do LUMA-OS (`docs/TESTS.md` dele) servem de checklist das Fases 1, 2, 5 e 6. Cada um precisa passar de novo no Fedora ou ter a exceção registrada na decisão correspondente.

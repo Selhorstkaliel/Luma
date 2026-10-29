@@ -20,6 +20,23 @@ run() { "$@" 2>&1 || echo "(falhou: $*)"; }
 	sec "portas abertas (escuta)"; run ss -tulnH
 	sec "bootc"; run bootc status
 	sec "logos"; run rpm -q fedora-logos generic-logos
+	# Fase 5: números para comparar com a Kinoite pura no mesmo ambiente (plano §11). Rodar ~60 s após o login.
+	sec "desempenho: boot"; run systemd-analyze time
+	sec "desempenho: 10 serviços mais lentos no boot"; systemd-analyze blame --no-pager 2>&1 | head -n 10
+	sec "desempenho: memória (MiB)"; run free -m
+	sec "desempenho: energia"
+	# Sem "| grep -q" sob pipefail (SIGPIPE, run ci 40634925786)
+	bat="$(upower -e 2>/dev/null | grep battery | head -n1 || true)"
+	if [ -n "$bat" ]; then upower -i "$bat" | grep -E 'state|energy-rate|percentage'
+	else echo "sem bateria (VM ou desktop)"; fi
+	sec "selinux: negações (AVC) desde o boot"
+	if command -v ausearch >/dev/null; then
+		avc="$(ausearch -m avc -ts boot 2>/dev/null || true)"
+		echo "total: $(grep -c 'type=AVC' <<<"$avc")"; grep 'type=AVC' <<<"$avc" | tail -n 5
+	else echo "ausearch ausente"; fi
+	sec "serviços com falha"; run systemctl --failed --no-legend --no-pager
+	sec "nmap (rodar no HOST, não na VM)"
+	for ip in $(hostname -I 2>/dev/null); do echo "sudo nmap -Pn -sS -p- --open $ip    # esperado: nenhuma porta aberta"; done
 	if [ -n "$user" ]; then
 		sec "tema do usuário $user"
 		run sudo -u "$user" kreadconfig6 --file kdeglobals --group KDE --key LookAndFeelPackage

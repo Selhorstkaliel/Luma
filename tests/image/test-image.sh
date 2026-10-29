@@ -92,6 +92,23 @@ check F3-I03 "Ajustes: lançador .desktop válido" desktop_ok
 check F4-I01 "jogos: gamemoderun, mangohud e gamescope presentes" bash -c 'command -v gamemoderun && command -v mangohud && command -v gamescope'
 check F4-I02 "jogos: luma-jogos gera os comandos Flatpak de usuário" bash -c 'luma-jogos --simular instalar steam | grep -q "flatpak install --user"'
 check F4-I03 "jogos: sem RPM Fusion na imagem (decisão 0012)" bash -c '! ls /etc/yum.repos.d/ | grep -qi rpmfusion'
+# Fase 5: controles estáticos de segurança (os dinâmicos, como nmap e AVCs, são da VM: sudo luma-diagnostico)
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+luma_files_not_world_writable() {
+	local bad
+	bad="$(find /usr/bin/luma-* /usr/libexec/luma /usr/share/luma-ajustes /usr/share/plasma/look-and-feel/org.luma* \
+		/usr/share/plymouth/themes/luma /etc/xdg/kdeglobals /etc/xdg/kwinrc /etc/xdg/kscreenlockerrc \
+		/usr/lib/firewalld/zones/luma.xml -perm -0002 ! -type l 2>/dev/null)"
+	[ -z "$bad" ] || { echo "graváveis por todos: $bad" >&2; return 1; }
+}
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+sshd_not_enabled() { ! enabled sshd.service; }
+check F5-I01 "SSH desligado por padrão" sshd_not_enabled
+check F5-I02 "arquivos do Luma não graváveis por todos" luma_files_not_world_writable
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+zone_not_accept() { ! grep -q 'target="ACCEPT"' /usr/lib/firewalld/zones/luma.xml; }
+check F5-I03 "zona luma sem alvo ACCEPT (entrada recusada por padrão)" zone_not_accept
+check F5-I04 "luma-diagnostico mede boot, RAM e AVCs" grep -q 'ausearch -m avc' /usr/bin/luma-diagnostico
 check F1-I01 "luma-hostname habilitado no boot" enabled luma-hostname.service
 check F1-I02 "luma-diagnostico instalado" test -x /usr/bin/luma-diagnostico
 default_lnf || true
