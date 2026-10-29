@@ -67,5 +67,16 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 | F5-04 | Bateria em repouso ≤ Kinoite pura +5% | `upower`, hardware real | BLOQUEADO: hardware | — |
 | F5-05 | Atualização assinada e rollback | — | BLOQUEADO: decisão 0009 (GHCR + cosign) | — |
 
+## Fase 6 (incremento 1: instalador interativo e guia de recuperação)
+| ID | Critério | Como | Estado | Evidência |
+|---|---|---|---|---|
+| F6-U01 | Kickstart da ISO sem comando destrutivo nem modo automático | `tests/unit/test_installer.py` sobre `build/iso/config.toml` | PASSOU (local, 2/2) | — |
+| F6-01 | O instalador para na tela de resumo e espera o usuário (não apaga o disco sozinho) | CI `iso`: OCR aos 240 s deve achar "INSTALLATION SUMMARY"/"RESUMO DA INSTALAÇÃO"; "INSTALLATION PROGRESS" sem interação reprova | PENDENTE (CI) [H: o Anaconda com kickstart incompleto para na tela de resumo] | — |
+| F6-02 | Idioma pt-BR, teclado br e hostname `luma` vêm do kickstart | VM | PENDENTE | — |
+| F6-03 | Recuperação documentada (rollback, entrada anterior do GRUB, TTY, reinstalação) | `docs/usuario/recuperacao.md` | ESCRITO; os passos de rollback estão BLOQUEADOS pela decisão 0009 (não há segunda versão) | — |
+| F6-04 | Dual boot com Windows em disco virtual | VM com Windows | PENDENTE | — |
+| F6-05 | Marca Luma no Anaconda (logos/cores) | — | NÃO INICIADO; hoje só o nome do produto é Luma-OS | — |
+| F6-06 | Canal de atualização assinado | — | BLOQUEADO: decisão 0009 (usuário: "ainda não", 2026-10-29) | — |
+
 ## Regressão herdada do LUMA-OS
 Os critérios E1–E9 do LUMA-OS (`docs/TESTS.md` dele) servem de checklist das Fases 1, 2, 5 e 6. Cada um precisa passar de novo no Fedora ou ter a exceção registrada na decisão correspondente.

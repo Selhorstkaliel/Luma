@@ -1,13 +1,16 @@
 Luma-OS - ISO PRÉ-ALPHA (somente para máquina virtual)
 
-ATENÇÃO: ESTA ISO INSTALA SOZINHA E APAGA O DISCO SEM PERGUNTAR.
-No CI (run iso #8, 2026-10-29), sem nenhuma interação, a instalação já estava em andamento
-4 minutos depois do boot. Use SOMENTE em máquina virtual com um disco virtual vazio.
-Nunca dê boot com ela em um computador real, nem com pendrive esquecido na porta USB.
+ATENÇÃO: USE SOMENTE EM MÁQUINA VIRTUAL, COM UM DISCO VIRTUAL VAZIO.
+Até o run iso #10 a ISO instalava sozinha e apagava o disco sem perguntar. Desde a Fase 6 o
+instalador deve parar na tela "Resumo da instalação" e esperar você escolher disco e usuário;
+o teste de boot do CI agora reprova se a instalação começar sem interação (veja boot/boot-resultado.txt).
+Mesmo assim: confira a tela de resumo antes de clicar em instalar e nunca dê boot com esta ISO
+em um computador real, nem com pendrive esquecido na porta USB.
 
 Esta ISO é um build automático de desenvolvimento, sem garantia de nenhum tipo.
 O que ela contém: Fedora Kinoite 44 com a identidade Luma, firewall de entrada fechado,
-tema Luma Midnight, tela de boot Luma e o comando "sudo luma-diagnostico".
+tema Luma Midnight, tela de boot Luma, app Ajustes, "luma-jogos" (Steam/Lutris/Heroic/Bottles via
+Flathub) e o comando "sudo luma-diagnostico". Recuperação: docs/usuario/recuperacao.md no repositório.
 
 Conferir o arquivo antes de usar:
   sha256sum -c luma-*-x86_64.iso.sha256

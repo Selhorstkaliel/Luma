@@ -34,16 +34,19 @@ for png in "$out/boot-${early}s.png" "$out/boot-${wait_s}s.png"; do
 done
 final="$(tr '\n' ' ' < "$out/boot-${wait_s}s.txt" 2>/dev/null || true)"
 all="$(cat "$out/boot-${early}s.txt" "$out/boot-${wait_s}s.txt" 2>/dev/null | tr '\n' ' ')"
-# Firmware, Secure Boot ou kernel em qualquer captura; menu do GRUB só conta se ainda estiver na final
+# Firmware, Secure Boot ou kernel em qualquer captura; menu do GRUB só conta se ainda estiver na final.
+# Instalação em andamento sem ninguém interagir = o instalador apaga o disco sozinho (run iso #8): FALHA.
+# Desde a Fase 6 o kickstart do Luma (build/iso/config.toml) deixa o Anaconda esperando na tela de resumo.
 bad='Boot Manager|Boot Options|Shell>|Access Denied|Security Violation|Verification failed|Kernel panic|emergency mode'
 stuck='Test this media'
-# "INSTALLATION PROGRESS": o kickstart do bootc-image-builder instala sozinho, sem tela de boas-vindas (run iso #8)
-good='WELCOME|Welcome to|language would you like|INSTALLATION SUMMARY|Installation Summary|INSTALLATION PROGRESS|Installation Progress|Bem-vindo'
+unattended='INSTALLATION PROGRESS|Installation Progress'
+good='WELCOME|Welcome to|language would you like|INSTALLATION SUMMARY|Installation Summary|Bem-vindo|RESUMO DA INSTALA|Resumo da instala'
 if grep -Eqi "$bad" <<<"$all" || grep -Eqi "$stuck" <<<"$final"; then verdict=FALHA
+elif grep -Eqi "$unattended" <<<"$final"; then verdict="FALHA (instalação começou sem interação)"
 elif grep -Eqi "$good" <<<"$final"; then verdict=INSTALADOR
 else verdict=INCONCLUSIVO; fi
 {
 	echo "veredito: $verdict (capturas aos ${early}s e ${wait_s}s, OCR tesseract)"
 	echo "texto final (OCR): $(cut -c1-400 <<<"$final")"
 } | tee "$out/boot-resultado.txt"
-[ "$verdict" != FALHA ]
+[ "${verdict%% *}" != FALHA ]

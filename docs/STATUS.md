@@ -10,7 +10,7 @@ Atualizado em 2026-10-28. Plano: [PLANO-MESTRE.md](PLANO-MESTRE.md). Testes: [TE
 | 3: Luma Apps | **EM ANDAMENTO**. Incremento 1: o app Ajustes (PySide6 + Kirigami) entra na imagem e volta ao dock, com autoteste da interface no CI; a Central de Controle está na barra superior desde a Fase 2. Próximos: Boas-vindas (Plasma Setup) e presets do Monitor do Sistema |
 | 4: Gaming | **EM ANDAMENTO** (decisão 0012). Incremento 1: GameMode, MangoHud e gamescope do Fedora na imagem; `luma-jogos` e atalho "Jogos" instalam Steam, Lutris, Heroic e Bottles via Flathub, sem root e sem RPM Fusion. NVIDIA adiada. Medição de jogos exige hardware real |
 | 5: Segurança e desempenho | **EM ANDAMENTO**. Incremento 1: controles estáticos no CI (SSH desligado, permissões, zona do firewall) e medições no `sudo luma-diagnostico` (boot, serviços lentos, RAM, energia, AVCs, roteiro de nmap). Os critérios de aceite dependem da VM (nmap, AVCs, comparação com a Kinoite), de hardware (bateria) e da decisão 0009 (updates assinados) |
-| 6: Instalador e atualizações | NÃO INICIADA |
+| 6: Instalador e atualizações | **EM ANDAMENTO**. Incremento 1: kickstart próprio sem nada destrutivo (o instalador deve esperar o usuário em vez de apagar o disco sozinho), teste unitário que barra comandos destrutivos, teste de boot que reprova instalação sem interação, guia `docs/usuario/recuperacao.md`. Bloqueado: canal de atualização assinado (decisão 0009). Pendente: dual boot em disco virtual, marca do Anaconda |
 | 7: Lume SDK | BLOQUEADA: o compilador lumec ainda não existe (informação do usuário) |
 | 8: Testes e lançamento | NÃO INICIADA |
 

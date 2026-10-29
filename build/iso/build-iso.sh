@@ -17,12 +17,15 @@ out="$(realpath "$out")"
 storage="$(podman info --format '{{.Store.GraphRoot}}')"
 podman pull -q "$IB_IMAGE" >/dev/null
 
+# Kickstart do Luma sem nada destrutivo (instalador interativo); o bib lê /config.toml
+CONFIG="${CONFIG:-$(cd "$(dirname "$0")" && pwd)/config.toml}"
+[ -r "$CONFIG" ] || { echo "build-iso.sh: configuração do instalador ausente: $CONFIG" >&2; exit 1; }
 # uso: run_tool IMAGEM DIR LOG ARGUMENTOS...  (a ferramenta enxerga o armazenamento no MESMO caminho do host)
 run_tool() {
 	local image="$1" dir="$2" log="$3"; shift 3
 	rm -rf "$dir"; mkdir -p "$dir"
 	podman run --rm --privileged --security-opt label=type:unconfined_t \
-		-v "$storage:/var/lib/containers/storage" -v "$dir:/output" \
+		-v "$storage:/var/lib/containers/storage" -v "$dir:/output" -v "$CONFIG:/config.toml:ro" \
 		"$image" "$@" >"$log" 2>&1
 }
 [ "$storage" = /var/lib/containers/storage ] || echo "AVISO: armazenamento em $storage; o image-builder espera /var/lib/containers/storage" >&2
@@ -55,6 +58,7 @@ rm -rf "$out/ib-bootc-installer" "$out/bib-anaconda-iso"
 	echo "sha256: $(cut -d' ' -f1 "$out/$name.sha256")"
 	echo "tamanho_bytes: $(stat -c %s "$out/$name")"
 	echo "tipo: $type"
+	echo "kickstart: $(sha256sum "$CONFIG" | cut -d' ' -f1) ($(basename "$CONFIG"))"
 	echo "ferramenta: $tool@$tool_digest"
 	[ -z "$ib_fail" ] || echo "bootc_installer_falhou: $ib_fail"
 	echo "imagem_luma: $payload@$(podman image inspect "$payload" --format '{{.Digest}}')"

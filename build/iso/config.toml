@@ -1,0 +1,13 @@
+# Configuração do instalador da ISO (bootc-image-builder, tipo anaconda-iso). Fase 6, incremento 1.
+# Sem nada destrutivo: nenhum particionamento, nenhum "zerombr/clearpart", nenhum modo não interativo,
+# nenhum reboot automático. Disco e usuário são escolhidos na tela do Anaconda.
+# Motivo: sem este arquivo, o kickstart padrão do bib instalava sozinho e apagava o disco (run iso #8).
+# O bib só acrescenta o comando "ostreecontainer" da imagem Luma (docs da Red Hat, RHEL 9, cap. 5).
+# tests/unit/test_installer.py barra comandos destrutivos aqui.
+[customizations.installer.kickstart]
+contents = """
+lang pt_BR.UTF-8
+keyboard br
+timezone America/Sao_Paulo
+network --bootproto=dhcp --hostname=luma
+"""
