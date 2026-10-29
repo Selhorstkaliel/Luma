@@ -77,5 +77,25 @@ class TestCommands(unittest.TestCase):
                 self.assertIn(argv[0], ("systemsettings", "plasma-discover"))
 
 
+class TestTools(unittest.TestCase):
+    # run iso #16: o qdbus6 não existe na imagem Fedora; mudar animações ou transparência parava com erro
+    def all_commands(self):
+        return (core.mode_commands("claro") + core.mode_commands("escuro") + core.accent_commands("rosa")
+                + core.animations_commands(True) + core.animations_commands(False)
+                + core.text_size_commands("Grande") + core.transparency_commands(50) + core.transparency_commands(0))
+
+    def test_no_qdbus6(self):
+        for cmd in self.all_commands():
+            with self.subTest(comando=cmd.description):
+                self.assertNotIn("qdbus", cmd.argv[0])
+
+    def test_kwin_reload_uses_dbus_send(self):
+        reloads = [c.argv for c in self.all_commands() if c.description == "recarregar KWin"]
+        self.assertTrue(reloads)
+        for argv in reloads:
+            self.assertEqual(argv[0], "dbus-send")
+            self.assertIn("org.kde.KWin.reconfigure", argv)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

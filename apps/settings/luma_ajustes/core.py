@@ -2,7 +2,7 @@
 """Lógica do app Ajustes do Luma, sem dependência de Qt (testável com unittest).
 
 Cada ajuste vira uma lista de comandos de ferramentas que já existem no sistema:
-luma-appearance, plasma-apply-colorscheme, kwriteconfig6 e qdbus6. Nada exige privilégios.
+luma-appearance, plasma-apply-colorscheme, kwriteconfig6 e dbus-send. Nada exige privilégios.
 """
 from __future__ import annotations
 
@@ -19,6 +19,11 @@ ACCENTS = {
     "verde": "#22C55E",
     "cinza": "#6B7280",
 }
+
+# A imagem Fedora não traz o qdbus6 (run iso #16: "env: 'qdbus6': No such file or directory");
+# o dbus-send faz a mesma chamada e já está no sistema
+KWIN_RECONFIGURE = ["dbus-send", "--session", "--type=method_call", "--dest=org.kde.KWin", "/KWin",
+                    "org.kde.KWin.reconfigure"]
 
 TEXT_SIZES = {"Pequeno": 9, "Médio": 10, "Grande": 12}
 FONT_FAMILY = "Inter"
@@ -93,7 +98,7 @@ def animations_commands(enabled: bool) -> list[Command]:
     return [
         Command(["kwriteconfig6", "--file", "kdeglobals", "--group", "KDE", "--key", "AnimationDurationFactor", factor],
                 "animações " + ("ligadas" if enabled else "desligadas")),
-        Command(["qdbus6", "org.kde.KWin", "/KWin", "reconfigure"], "recarregar KWin"),
+        Command(KWIN_RECONFIGURE, "recarregar KWin"),
     ]
 
 
@@ -127,7 +132,7 @@ def transparency_commands(percent: int) -> list[Command]:
                 f"janelas inativas {opacity}%"),
         Command(["kwriteconfig6", "--file", "kwinrc", "--group", "Effect-translucency", "--key", "MoveResize", opacity],
                 f"janelas em movimento {opacity}%"),
-        Command(["qdbus6", "org.kde.KWin", "/KWin", "reconfigure"], "recarregar KWin"),
+        Command(KWIN_RECONFIGURE, "recarregar KWin"),
     ]
 
 

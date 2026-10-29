@@ -38,6 +38,8 @@ trap cleanup EXIT
 ocr() { tr '\n' ' ' <"$ev/capturas/$1.txt" 2>/dev/null || true; }
 # Captura com OCR (texto ao lado da imagem)
 capture() {
+	# Acorda a tela (o Plasma apaga o monitor por ociosidade: run iso #16, "Display output is not active")
+	if "$LAB" key shift >/dev/null 2>&1; then sleep 2; fi
 	"$LAB" screenshot "$ev/capturas/$1.png" >/dev/null 2>&1 || { log "captura $1 falhou"; return 0; }
 	tesseract "$ev/capturas/$1.png" "$ev/capturas/$1" -l eng >/dev/null 2>&1 || true
 }
@@ -104,6 +106,8 @@ while kill -0 "$qemu_pid" 2>/dev/null; do
 				touch "$work/srv/sync/nmap-done" ;;
 			"LUMACI BEGIN"*) begun=yes; log "${l#LUMACI }" ;;
 			"LUMACI RESULT "*|"LUMACI END"*|"LUMACI AVISO"*) log "${l#LUMACI }" ;;
+			# Detalhes que só iam para o serial (o artefato nem sempre dá para baixar)
+			"LUMACI DATA AVC "*|"LUMACI DATA AJUSTES "*|"LUMACI DATA FAILED "*|"LUMACI DATA PLASMALOGIN "*) log "${l#LUMACI DATA }" ;;
 		esac
 	done
 	sleep 2; t=$((t + 2))

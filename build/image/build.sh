@@ -31,6 +31,25 @@ dnf -y install gamemode mangohud gamescope
 dnf -y install --skip-unavailable steam-devices
 echo "luma: steam-devices $(rpm -q steam-devices 2>/dev/null || echo 'indisponível no Fedora')"
 
+# Idioma, teclado e fuso do Brasil como padrão do sistema instalado (F6-02). O Anaconda com ostreecontainer
+# não gravou locale.conf, vconsole.conf nem o fuso do kickstart (run iso #16: LANG=C.UTF-8, teclado sem
+# definição, UTC); o /etc da imagem vai para a instalação. Outro idioma: Configurações do Sistema > Região.
+dnf -y install glibc-langpack-pt
+printf 'LANG=pt_BR.UTF-8\n' >/etc/locale.conf
+printf 'KEYMAP=br-abnt2\n' >/etc/vconsole.conf
+mkdir -p /etc/X11/xorg.conf.d
+cat >/etc/X11/xorg.conf.d/00-keyboard.conf <<'EOF'
+# Teclado padrão do Luma (lido pelo systemd-localed e pela sessão Plasma); "localectl" altera
+Section "InputClass"
+	Identifier "system-keyboard"
+	MatchIsKeyboard "on"
+	Option "XkbLayout" "br"
+EndSection
+EOF
+ln -sfn ../usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
+[ -e /usr/share/zoneinfo/America/Sao_Paulo ] || { echo "luma: fuso America/Sao_Paulo ausente" >&2; exit 1; }
+grep -qix 'pt_BR.utf8' <<<"$(locale -a)" || { echo "luma: locale pt_BR.UTF-8 ausente após glibc-langpack-pt" >&2; exit 1; }
+
 # Marca: sem logos do Fedora (decisão 0010). generic-logos fornece o mesmo "system-logos" com arte neutra.
 dnf -y swap fedora-logos generic-logos
 ! rpm -q fedora-logos >/dev/null 2>&1 || { echo "fedora-logos continua instalado" >&2; exit 1; }

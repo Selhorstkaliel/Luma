@@ -34,7 +34,7 @@ class Backend(QObject):
             except (OSError, subprocess.TimeoutExpired) as e:
                 self.error.emit(f"Não foi possível aplicar ({cmd.description}): {e}")
                 return
-            if res.returncode != 0 and cmd.argv[0] not in ("qdbus6", "dbus-send"):
+            if res.returncode != 0 and cmd.argv[0] != "dbus-send":
                 self.error.emit(f"Não foi possível aplicar ({cmd.description}).")
                 return
         self.changed.emit()

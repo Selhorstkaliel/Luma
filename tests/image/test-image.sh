@@ -89,7 +89,30 @@ desktop_ok() {
 	if command -v desktop-file-validate >/dev/null; then desktop-file-validate "$f"; else grep -qx 'Exec=luma-ajustes' "$f"; fi
 }
 check F3-I03 "Ajustes: lançador .desktop válido" desktop_ok
-check F4-I01 "jogos: gamemoderun, mangohud e gamescope presentes" bash -c 'command -v gamemoderun && command -v mangohud && command -v gamescope'
+# Todo programa que os botões do Ajustes chamam existe na imagem (run iso #16: qdbus6 ausente parava o app)
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+ajustes_tools_exist() {
+	PYTHONPATH=/usr/share/luma-ajustes python3 - <<'EOF'
+import shutil, sys
+from luma_ajustes import core
+cmds = (core.mode_commands("claro") + core.mode_commands("escuro") + core.accent_commands("rosa")
+        + core.animations_commands(False) + core.text_size_commands("Grande") + core.transparency_commands(50))
+missing = sorted({c.argv[0] for c in cmds if shutil.which(c.argv[0]) is None})
+missing += sorted({argv[0] for _sid, _l, _i, argv in core.SECTIONS if argv and shutil.which(argv[0]) is None})
+print("programas ausentes:", missing or "nenhum", file=sys.stderr)
+sys.exit(1 if missing else 0)
+EOF
+}
+check F3-I04 "Ajustes: todos os programas que os botões chamam existem" ajustes_tools_exist
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+ptbr_defaults() {
+	grep -qx 'LANG=pt_BR.UTF-8' /etc/locale.conf && grep -qx 'KEYMAP=br-abnt2' /etc/vconsole.conf \
+		&& grep -q '"XkbLayout" "br"' /etc/X11/xorg.conf.d/00-keyboard.conf \
+		&& [ "$(readlink -f /etc/localtime)" = /usr/share/zoneinfo/America/Sao_Paulo ] \
+		&& grep -qix 'pt_BR.utf8' <<<"$(locale -a)"
+}
+check F6-I01 "pt-BR, teclado br e fuso de São Paulo como padrão do sistema instalado" ptbr_defaults
+check F4-I01"jogos: gamemoderun, mangohud e gamescope presentes" bash -c 'command -v gamemoderun && command -v mangohud && command -v gamescope'
 check F4-I02 "jogos: luma-jogos gera os comandos Flatpak de usuário" bash -c 'luma-jogos --simular instalar steam | grep -q "flatpak install --user"'
 # A Kinoite traz arquivos .repo do RPM Fusion DESABILITADOS (fedora-workstation-repositories) [H]; a decisão
 # 0012 proíbe pacotes do RPM Fusion e repositório RPM Fusion habilitado, não os arquivos da base (ci #21).
@@ -126,6 +149,7 @@ launchers_exist || true
 echo "--- arquivos RPM Fusion da base (evidência) ---"
 for f in /etc/yum.repos.d/*rpmfusion*.repo; do [ -e "$f" ] && echo "$f: $(grep -ci '^enabled *= *1' "$f") seção(ões) habilitada(s)"; done
 no_rpmfusion || true
+echo "--- programas do Ajustes (evidência) ---"; ajustes_tools_exist || true
 echo "--- luma-ajustes --verificar (evidência) ---"; QT_QPA_PLATFORM=offscreen HOME=/tmp luma-ajustes --verificar 2>&1 | tail -n 20 || true
 
 echo "falhas: $fails"

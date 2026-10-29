@@ -34,7 +34,11 @@ asuser() {
 		QT_QPA_PLATFORM=wayland XDG_CURRENT_DESKTOP=KDE "$@"
 }
 kread() { asuser kreadconfig6 --file "$1" --group "$2" --key "$3"; }
-plasma_js() { asuser qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "$1"; }
+# Sem qdbus6 na imagem (run iso #16): busctl responde no formato  s "texto"
+plasma_js() {
+	asuser busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s "$1" 2>&1 \
+		| sed -e 's/^s "//' -e 's/"$//'
+}
 
 # --- Sistema (F1, F6) -------------------------------------------------------------------------------------
 res F1-08 "$([ "$(hostnamectl hostname)" = luma ] && echo PASSOU || echo FALHOU)" "hostname=$(hostnamectl hostname) /etc/hostname=$(cat /etc/hostname 2>/dev/null)"
@@ -63,6 +67,13 @@ if ! pgrep -u "$U" -x plasmashell >/dev/null; then
 	say "END"; systemctl poweroff; exit 0
 fi
 res SESSAO PASSOU "plasmashell do usuário novo $U em execução"
+# Sem bloqueio nem tela apagada por ociosidade durante o teste (run iso #16: tela apagada aos 5 min) [H: chaves do Plasma 6]
+asuser kwriteconfig6 --file kscreenlockerrc --group Daemon --key Autolock false
+asuser kwriteconfig6 --file kscreenlockerrc --group Daemon --key LockOnResume false
+for g in AC Battery LowBattery; do
+	asuser kwriteconfig6 --file powerdevilrc --group "$g" --group Display --key TurnOffDisplayWhenIdle false
+	asuser kwriteconfig6 --file powerdevilrc --group "$g" --group Display --key DimDisplayWhenIdle false
+done
 sleep 45   # deixa o Plasma terminar de montar painéis e papel de parede (llvmpipe, sem 3D)
 res RAM INFO "$(free -m | awk '/^Mem:/{print "usada="$3"MiB total="$2"MiB"}') (60 s após o login, sem apps abertos)"
 shot desktop-usuario-novo
@@ -81,8 +92,9 @@ res F3-02 "$(grep -q org.luma.controlcenter <<<"$panels" && echo PASSOU || echo 
 asuser luma-ajustes >/var/luma-ci/ajustes.log 2>&1 &
 sleep 25
 shot ajustes-aberto
-ajustes_vivo=no; pgrep -u "$U" -f luma-ajustes >/dev/null && ajustes_vivo=yes
-pkill -u "$U" -f luma-ajustes || true
+ajustes_vivo=no; pgrep -u "$U" -f luma_ajustes >/dev/null && ajustes_vivo=yes
+pkill -u "$U" -f luma_ajustes || true
+sleep 3
 # As mesmas listas de comandos que os botões do app executam (luma_ajustes.core), como o usuário, sem senha
 apply_out="$(asuser env PYTHONPATH=/usr/share/luma-ajustes python3 - <<'EOF' 2>&1
 import subprocess
@@ -91,9 +103,17 @@ cmds = (core.mode_commands("claro") + core.accent_commands("rosa", "claro") + co
         + core.text_size_commands("Grande") + core.transparency_commands(50))
 priv = [c.argv for c in cmds if c.argv[0] in ("sudo", "pkexec", "su", "doas")]
 fails = []
+# O destaque gravado é a variante acessível da cor (core.accessible_accent), não o valor bruto do mockup
 for c in cmds:
-    r = subprocess.run(c.argv, capture_output=True, text=True, timeout=120)
-    if r.returncode != 0 and c.argv[0] not in ("qdbus6", "dbus-send"):
+    if "AccentColor" in c.argv:
+        print("destaque_esperado=" + c.argv[-1])
+for c in cmds:
+    try:
+        r = subprocess.run(c.argv, capture_output=True, text=True, timeout=120)
+    except OSError as e:
+        fails.append(f"{c.description}: {e}")
+        continue
+    if r.returncode != 0 and c.argv[0] != "dbus-send":
         fails.append(f"{c.description}: rc={r.returncode} {r.stderr.strip()[:120]}")
 print(f"comandos={len(cmds)} privilegiados={len(priv)} falhas={len(fails)}")
 for f in fails:
@@ -102,13 +122,14 @@ EOF
 )"
 sleep 10
 shot ajustes-claro-rosa
+acc_esperado="$(sed -n 's/^destaque_esperado=//p' <<<"$apply_out")"
 lnf2="$(kread kdeglobals KDE LookAndFeelPackage)"; acc="$(kread kdeglobals Luma AccentColor)"
 anim="$(kread kdeglobals KDE AnimationDurationFactor)"; font="$(kread kdeglobals General font)"
 transl="$(kread kwinrc Plugins translucencyEnabled)"
 ok=FALHOU
 [ "$ajustes_vivo" = yes ] && grep -q 'privilegiados=0 falhas=0' <<<"$apply_out" && [ "$lnf2" = org.luma.desktop ] \
-	&& [ "$acc" = '#EC4899' ] && [ "$anim" = 0 ] && grep -q '^Inter,12' <<<"$font" && [ "$transl" = true ] && ok=PASSOU
-res F3-01 "$ok" "janela=$ajustes_vivo $(head -n1 <<<"$apply_out") LnF=$lnf2 destaque=$acc animacao=$anim fonte=$font translucidez=$transl"
+	&& [ -n "$acc" ] && [ "$acc" = "$acc_esperado" ] && [ "$anim" = 0 ] && grep -q '^Inter,12' <<<"$font" && [ "$transl" = true ] && ok=PASSOU
+res F3-01 "$ok" "janela=$ajustes_vivo $(grep -m1 '^comandos=' <<<"$apply_out" || echo "$apply_out" | head -n1) LnF=$lnf2 destaque=$acc(esperado $acc_esperado) animacao=$anim fonte=$font translucidez=$transl"
 dump AJUSTES echo "$apply_out"
 asuser luma-appearance escuro >/dev/null 2>&1 || true
 
