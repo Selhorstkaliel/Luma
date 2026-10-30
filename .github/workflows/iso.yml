@@ -12,6 +12,7 @@ on:
       - themes/**
       - plasma/**
       - icons/**
+      - installer/**
       - wallpapers/**
       - apps/**
       - gaming/**

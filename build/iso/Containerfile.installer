@@ -3,7 +3,24 @@
 # (--bootc-installer-payload-ref). Padrão documentado pelo osbuild ("FROM <bootc> + dnf install anaconda").
 # Os pacotes exatos que o Anaconda exige no Fedora 44 são hipótese [H]; o CI confirma ou derruba.
 ARG LUMA_IMAGE=localhost/luma:44
+ARG TOOLS_IMAGE=quay.io/fedora/fedora:44
+
+# Marca Luma no Anaconda (F6-05): imagens rasterizadas aqui, sem levar o rsvg-convert para o instalador
+FROM ${TOOLS_IMAGE} AS marca
+RUN dnf -y install librsvg2-tools && dnf clean all
+COPY installer/ /src/installer/
+COPY icons/ /src/icons/
+RUN /src/installer/anaconda/build.sh /src /out
+
 FROM ${LUMA_IMAGE}
 # dnf5 em build de imagem Atomic é esperado no Fedora 44 [H]; sem ele, rpm-ostree instala o mesmo conjunto
 RUN pkgs='anaconda anaconda-install-env-deps anaconda-dracut'; \
     if command -v dnf >/dev/null; then dnf -y install $pkgs && dnf clean all; else rpm-ostree install $pkgs; fi
+# Evidência: o que havia em pixmaps e quais imagens o CSS do Anaconda usa (os nomes são [H] até este log)
+RUN echo "luma: pixmaps antes: $(ls /usr/share/anaconda/pixmaps 2>/dev/null | tr '\n' ' ')"; \
+    echo "luma: imagens citadas no CSS: $(grep -rhoE 'pixmaps/[A-Za-z0-9_-]+\.png' /usr/share/anaconda --include='*.css' 2>/dev/null | sort -u | tr '\n' ' ')"
+COPY --from=marca /out/ /usr/share/anaconda/pixmaps/
+RUN for f in sidebar-bg.png topbar-bg.png sidebar-logo.png; do \
+      if grep -rqs "pixmaps/$f" /usr/share/anaconda --include='*.css'; then echo "luma: Anaconda usa $f: sim"; \
+      else echo "luma: Anaconda usa $f: NÃO (nome não citado no CSS)"; fi; \
+    done

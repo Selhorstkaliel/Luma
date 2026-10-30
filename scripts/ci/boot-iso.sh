@@ -27,6 +27,9 @@ kill -0 "$qemu_pid" 2>/dev/null || { echo "QEMU encerrou antes da captura" | tee
 sleep "$((wait_s - early))"
 kill -0 "$qemu_pid" 2>/dev/null || { echo "QEMU encerrou antes da captura" | tee "$out/boot-resultado.txt"; exit 1; }
 "$LAB" screenshot "$out/boot-${wait_s}s.png"
+# Marca Luma no Anaconda (F6-05): cor da barra lateral à esquerda, em duas alturas (Midnight = quase preto
+# azulado; a da base é azul ou cinza). Só registro: a aprovação visual é da captura.
+cor_lateral="$("$LAB" pixel 12 420 2>/dev/null || echo '?') / $("$LAB" pixel 12 700 2>/dev/null || echo '?')"
 
 command -v tesseract >/dev/null || { echo "tesseract ausente: veredito INCONCLUSIVO" | tee "$out/boot-resultado.txt"; exit 0; }
 for png in "$out/boot-${early}s.png" "$out/boot-${wait_s}s.png"; do
@@ -48,5 +51,6 @@ else verdict=INCONCLUSIVO; fi
 {
 	echo "veredito: $verdict (capturas aos ${early}s e ${wait_s}s, OCR tesseract)"
 	echo "texto final (OCR): $(cut -c1-400 <<<"$final")"
+	echo "F6-05 INFO cor da barra lateral (x=12, y=420 / y=700; Midnight ~ 8 13 25): $cor_lateral"
 } | tee "$out/boot-resultado.txt"
 [ "${verdict%% *}" != FALHA ]

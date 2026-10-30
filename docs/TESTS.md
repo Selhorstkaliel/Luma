@@ -78,7 +78,7 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 | F6-02 | Idioma pt-BR, teclado br e hostname `luma` vêm do kickstart | VM | PASSOU (run iso #18 = 40931657896, commit b9bc3ad, sistema instalado em QEMU + OVMF com Secure Boot): LANG=pt_BR.UTF-8, teclado br-abnt2/br, fuso America/Sao_Paulo. Vêm do `/etc` da imagem (F6-I01), porque o Anaconda com ostreecontainer não aplica `lang`/`keyboard`/`timezone` do kickstart (iso #16); o hostname vem do kickstart. A interface do instalador continua em inglês | — |
 | F6-03 | Recuperação documentada (rollback, entrada anterior do GRUB, TTY, reinstalação) | `docs/usuario/recuperacao.md` | ESCRITO; os passos de rollback estão BLOQUEADOS pela decisão 0009 (não há segunda versão) | — |
 | F6-04 | Dual boot com Windows em disco virtual | VM com Windows | PENDENTE | — |
-| F6-05 | Marca Luma no Anaconda (logos/cores) | — | NÃO INICIADO; hoje só o nome do produto é Luma-OS | — |
+| F6-05 | Marca Luma no Anaconda (logos/cores) | `build/iso/Containerfile.installer` grava em `/usr/share/anaconda/pixmaps` o fundo Midnight da barra lateral, a faixa superior e o logotipo (`installer/anaconda/`, arte original); o log do build diz se o CSS do Anaconda usa cada nome [H]; o smoke de boot registra a cor da barra lateral (F6-05 INFO) e guarda a captura | EM TESTE: aguarda o próximo run `iso` (log do instalador, cor da barra lateral e aprovação visual da captura `boot-240s.png`). O nome do produto já é Luma-OS | — |
 | F6-06 | Canal de atualização assinado | — | BLOQUEADO: decisão 0009 (usuário: "ainda não", 2026-10-29) | — |
 
 ## Fase 7 (Lume 0.1, decisão 0013)
