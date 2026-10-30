@@ -25,7 +25,8 @@ if [ -n "$ntfs" ] && mkdir -p /run/luma-ci-ntfs && mount -t ntfs3 -o ro "$ntfs" 
 fi
 res F6-04-NTFS INFO "partição ${ntfs:-não encontrada}; marcador lido pelo Luma: ${txt:-nada}"
 # [H] Num sistema bootc o grub.cfg é estático (sem os-prober): o Windows aparece no menu do firmware, não no GRUB
-menu="$(grep -rlis 'windows\|bootmgfw' /boot/grub2 /boot/loader/entries /boot/efi/EFI/fedora 2>/dev/null | tr '\n' ' ')"
+# Só arquivos de texto (-I): os binários EFI do shim e do GRUB contêm "Windows" (dualboot #1, falso positivo)
+menu="$(grep -rlisI 'windows\|bootmgfw' /boot/grub2 /boot/loader/entries /boot/efi/EFI/fedora 2>/dev/null | tr '\n' ' ')"
 res F6-04-MENU INFO "Windows citado na configuração do carregador: ${menu:-não}"
 say "END dualboot"
 systemctl poweroff

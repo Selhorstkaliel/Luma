@@ -154,7 +154,9 @@ else
 	results+=$'\n'"F4-01 FALHOU janela do Steam não reconhecida: $(ocr steam | cut -c1-200)"
 fi
 # Marca: nenhuma tela do usuário novo apresenta o sistema como Fedora (decisão 0010)
-if grep -Eqi 'fedora' <<<"$(ocr desktop-usuario-novo) $(ocr boas-vindas)"; then
+# Citar a base ("baseado na Fedora Kinoite", na boas-vindas do Luma) é atribuição, não marca: sai antes do grep
+# (run iso #27: o F2-06 reprovou o próprio texto do Luma)
+if sed -E 's/basead[oa] n[oa] Fedora( Kinoite)?//Ig' <<<"$(ocr desktop-usuario-novo) $(ocr boas-vindas)" | grep -Eqi 'fedora'; then
 	results+=$'\n'"F2-06 FALHOU tela do usuário novo diz Fedora: $(ocr boas-vindas | cut -c1-200)"
 else
 	results+=$'\n'"F2-06 PASSOU nenhuma menção a Fedora na área de trabalho e nas boas-vindas (OCR)"
