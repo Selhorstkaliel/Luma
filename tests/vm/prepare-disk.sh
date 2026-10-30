@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prepara o disco do Luma recém-instalado para o teste do CI, com a VM DESLIGADA (scripts/ci/vm-test.sh):
-#   prepare-disk.sh DISCO.qcow2|DISCO.raw
+#   [MODO=medicao] prepare-disk.sh DISCO.qcow2|DISCO.raw
 # Grava no /etc do deployment ostree o roteiro tests/vm/guest (unit + script), o login automático do
 # usuário "teste" e os rótulos SELinux (xattr security.selinux; o host não precisa ter SELinux ativo).
 # Confere cada arquivo e imprime, como evidência, hostname, idioma e teclado gravados pelo instalador.
@@ -37,7 +37,10 @@ for etc in "${etcs[@]}"; do
 	say "deployment: ${etc#"$mnt"}"
 	lsattr -d "$etc" 2>/dev/null | sed 's/^/[prepare-disk] atributos: /' || true
 	install -d -m 0755 "$etc/luma-ci" "$etc/systemd/system/graphical.target.wants" "$etc/plasmalogin.conf.d"
-	install -m 0755 "$GUEST/luma-ci-checks.sh" "$etc/luma-ci/luma-ci-checks.sh"
+	# MODO=medicao (scripts/ci/vm-medicao.sh): no lugar do roteiro funcional, só a medição de RAM e boot (F5-03)
+	roteiro=luma-ci-checks.sh; [ "${MODO:-}" = medicao ] && roteiro=luma-ci-medicao.sh
+	install -m 0755 "$GUEST/$roteiro" "$etc/luma-ci/luma-ci-checks.sh"
+	say "roteiro: $roteiro"
 	install -m 0644 "$GUEST/luma-ci-checks.service" "$etc/systemd/system/luma-ci-checks.service"
 	ln -sfn ../luma-ci-checks.service "$etc/systemd/system/graphical.target.wants/luma-ci-checks.service"
 	# Login automático: arquivo principal e drop-in (relatos de que só um deles é lido, KDE bug 522006)
