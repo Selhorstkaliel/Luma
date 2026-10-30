@@ -36,6 +36,9 @@ if ! run_tool "$IB_IMAGE" "$dir" "$out/image-builder-bootc-installer.log" \
 	build --blueprint /config.toml --bootc-ref "$installer" --bootc-installer-payload-ref "$payload" --output-dir /output bootc-installer; then
 	echo "bootc-installer falhou (log em $out/image-builder-bootc-installer.log); tentando anaconda-iso do bootc-image-builder" >&2
 	tail -n 30 "$out/image-builder-bootc-installer.log" >&2
+	# O log completo só vai no artefato: as linhas de erro vão também para o log do job (iso #30: só "exit status 1")
+	echo "--- image-builder: linhas de erro ---" >&2
+	grep -aiE 'error|fail|traceback|no such|stage' "$out/image-builder-bootc-installer.log" | tail -n 60 >&2 || true
 	ib_fail="$(tail -n 3 "$out/image-builder-bootc-installer.log" | tr '\n' ' ' | cut -c1-300)"
 	podman pull -q "$BIB_IMAGE" >/dev/null || { echo "build-iso.sh: $BIB_IMAGE indisponível" >&2; exit 1; }
 	tool="$BIB_IMAGE"; type=anaconda-iso; dir="$out/bib-anaconda-iso"
