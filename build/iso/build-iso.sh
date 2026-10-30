@@ -17,7 +17,8 @@ out="$(realpath "$out")"
 storage="$(podman info --format '{{.Store.GraphRoot}}')"
 podman pull -q "$IB_IMAGE" >/dev/null
 
-# Kickstart do Luma sem nada destrutivo (instalador interativo); o bib lê /config.toml
+# Kickstart do Luma sem nada destrutivo (instalador interativo); o bib lê /config.toml e o image-builder o
+# recebe como blueprint (--blueprint)
 CONFIG="${CONFIG:-$(cd "$(dirname "$0")" && pwd)/config.toml}"
 [ -r "$CONFIG" ] || { echo "build-iso.sh: configuração do instalador ausente: $CONFIG" >&2; exit 1; }
 # uso: run_tool IMAGEM DIR LOG ARGUMENTOS...  (a ferramenta enxerga o armazenamento no MESMO caminho do host)
@@ -32,7 +33,7 @@ run_tool() {
 
 tool="$IB_IMAGE"; type=bootc-installer; dir="$out/ib-bootc-installer"; ib_fail=""
 if ! run_tool "$IB_IMAGE" "$dir" "$out/image-builder-bootc-installer.log" \
-	build --bootc-ref "$installer" --bootc-installer-payload-ref "$payload" --output-dir /output bootc-installer; then
+	build --blueprint /config.toml --bootc-ref "$installer" --bootc-installer-payload-ref "$payload" --output-dir /output bootc-installer; then
 	echo "bootc-installer falhou (log em $out/image-builder-bootc-installer.log); tentando anaconda-iso do bootc-image-builder" >&2
 	tail -n 30 "$out/image-builder-bootc-installer.log" >&2
 	ib_fail="$(tail -n 3 "$out/image-builder-bootc-installer.log" | tr '\n' ' ' | cut -c1-300)"

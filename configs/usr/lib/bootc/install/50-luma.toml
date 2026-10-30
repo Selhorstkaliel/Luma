@@ -1,0 +1,4 @@
+# Sistema de arquivos padrão da raiz para "bootc install" e para o image-builder (tipo bootc-installer), que
+# sem isto falha com "missing required info: DefaultRootFs" (run iso #28). btrfs, como o instalador já usa.
+[install.filesystem.root]
+type = "btrfs"

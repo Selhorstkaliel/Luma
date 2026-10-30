@@ -17,7 +17,9 @@ if ! pgrep -u "$U" -x plasmashell >/dev/null; then
 	say "MED boot=$n erro=sem-sessao"
 	systemctl poweroff; exit 0
 fi
-# As duas boas-vindas fecham, para medir o sistema parado (medicao #3: a do Luma aberta somava 122 MiB de PSS)
+# As duas boas-vindas fecham, para medir o sistema parado (medicao #3: a do Luma aberta somava 122 MiB de PSS;
+# medicao #4: fechar logo que o plasmashell aparece é cedo demais, o autostart ainda não a abriu)
+sleep 30
 pkill -u "$U" -f plasma-welcome || true
 pkill -u "$U" -f 'luma_ajustes --boas-vindas' || true
 sleep 120

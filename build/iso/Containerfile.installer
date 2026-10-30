@@ -17,10 +17,12 @@ FROM ${LUMA_IMAGE}
 RUN pkgs='anaconda anaconda-install-env-deps anaconda-dracut'; \
     if command -v dnf >/dev/null; then dnf -y install $pkgs && dnf clean all; else rpm-ostree install $pkgs; fi
 # Evidência: o que havia em pixmaps e quais imagens o CSS do Anaconda usa (os nomes são [H] até este log)
-RUN echo "luma: pixmaps antes: $(ls /usr/share/anaconda/pixmaps 2>/dev/null | tr '\n' ' ')"; \
-    echo "luma: imagens citadas no CSS: $(grep -rhoE 'pixmaps/[A-Za-z0-9_-]+\.png' /usr/share/anaconda --include='*.css' 2>/dev/null | sort -u | tr '\n' ' ')"
+# (iso #28: o CSS não está em /usr/share/anaconda; procura em /usr inteiro)
+RUN css="$(find /usr -name 'anaconda-gtk*.css' 2>/dev/null | tr '\n' ' ')"; echo "luma: CSS do Anaconda: ${css:-nenhum}"; \
+    echo "luma: pixmaps antes: $(ls /usr/share/anaconda/pixmaps 2>/dev/null | tr '\n' ' ')"; \
+    [ -z "$css" ] || echo "luma: imagens citadas no CSS: $(grep -hoE 'pixmaps/[A-Za-z0-9_-]+\.png' $css | sort -u | tr '\n' ' ')"
 COPY --from=marca /out/ /usr/share/anaconda/pixmaps/
 RUN for f in sidebar-bg.png topbar-bg.png sidebar-logo.png; do \
-      if grep -rqs "pixmaps/$f" /usr/share/anaconda --include='*.css'; then echo "luma: Anaconda usa $f: sim"; \
+      if find /usr -name 'anaconda-gtk*.css' -exec grep -qs "pixmaps/$f" {} + ; then echo "luma: Anaconda usa $f: sim"; \
       else echo "luma: Anaconda usa $f: NÃO (nome não citado no CSS)"; fi; \
     done

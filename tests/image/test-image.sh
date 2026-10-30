@@ -163,6 +163,7 @@ check F1-I01 "luma-hostname habilitado no boot" enabled luma-hostname.service
 check F1-I02 "luma-diagnostico instalado" test -x /usr/bin/luma-diagnostico
 # Unidades da base que falhavam em todo boot (run iso #19): pulam por condição em vez de falhar
 check F1-I03 "mcelog pulado em AMD e remount-fs pulado com raiz composefs" test -f /usr/lib/systemd/system/mcelog.service.d/luma-amd.conf -a -f /usr/lib/systemd/system/systemd-remount-fs.service.d/luma-composefs.conf
+check F1-I04 "raiz btrfs declarada para o bootc e o image-builder" grep -qx 'type = "btrfs"' /usr/lib/bootc/install/50-luma.toml
 check F2-I11 "sem as boas-vindas do Fedora (Bem-vindo ao Fedora!)" bash -c '! rpm -q plasma-welcome-fedora'
 default_lnf || true
 launchers_exist || true
