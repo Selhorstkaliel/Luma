@@ -55,6 +55,14 @@ grep -qix 'pt_BR.utf8' <<<"$(locale -a)" || { echo "luma: locale pt_BR.UTF-8 aus
 # própria do Luma é o F3-03. A evidência no log diz o que sobrou.
 if rpm -q plasma-welcome-fedora >/dev/null 2>&1; then dnf -y remove plasma-welcome-fedora; fi
 echo "luma: pacotes de boas-vindas restantes: $(rpm -qa '*welcome*' | tr '\n' ' ')"
+# A boas-vindas do KDE (plasma-welcome) não abre mais sozinha: o primeiro login mostra a do Luma (F3-03).
+# O programa continua instalado (o Plasma o usa nas notas de versão depois de uma atualização).
+echo "luma: autostart do plasma-welcome no pacote: $(rpm -ql plasma-welcome 2>/dev/null | grep -i autostart | tr '\n' ' ')"
+for f in /etc/xdg/autostart/*welcome*.desktop; do
+	case "$f" in *org.luma.*|*'*'*) continue ;; esac
+	grep -qx 'Hidden=true' "$f" || sed -i '/^\[Desktop Entry\]/a Hidden=true' "$f"
+	echo "luma: autostart desligado: $f"
+done
 
 # Marca: sem logos do Fedora (decisão 0010). generic-logos fornece o mesmo "system-logos" com arte neutra.
 dnf -y swap fedora-logos generic-logos

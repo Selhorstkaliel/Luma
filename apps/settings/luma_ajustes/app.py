@@ -2,6 +2,7 @@
 """App Ajustes do Luma: interface QML (Kirigami) + backend PySide6 que executa os comandos de core.py."""
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -108,26 +109,51 @@ class Backend(QObject):
         self._run(core.transparency_commands(percent))
 
     @Slot(str)
+    def welcomeAction(self, action_id: str) -> None:
+        argv = core.WELCOME_ACTIONS.get(action_id)
+        if not argv:
+            return
+        try:
+            subprocess.Popen(argv, start_new_session=True)  # noqa: S603 — comandos fixos de core.WELCOME_ACTIONS
+        except OSError as e:
+            self.error.emit(f"Não foi possível abrir ({action_id}): {e}")
+
+    @Slot()
+    def finishWelcome(self) -> None:
+        core.mark_welcome_done(_config_home())
+        QGuiApplication.quit()
+
+    @Slot(str)
     def openSection(self, section_id: str) -> None:
         for sid, _label, _icon, argv in core.SECTIONS:
             if sid == section_id and argv:
                 subprocess.Popen(argv, start_new_session=True)  # noqa: S603 — comandos fixos de core.SECTIONS
 
 
+def _config_home() -> str:
+    return os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
+
+
 def main() -> int:
+    args = sys.argv[1:]
+    welcome = "--boas-vindas" in args
+    # Boas-vindas (F3-03): só no primeiro login, a não ser com --forcar; o autoteste sempre carrega a interface
+    if welcome and "--verificar" not in args and not core.should_show_welcome(_config_home(), "--forcar" in args):
+        return 0
     app = QGuiApplication(sys.argv)
-    app.setApplicationName("luma-ajustes")
-    app.setApplicationDisplayName("Ajustes")
-    app.setDesktopFileName("org.luma.ajustes")
-    app.setWindowIcon(QIcon.fromTheme("preferences-system"))
+    app.setApplicationName("luma-boas-vindas" if welcome else "luma-ajustes")
+    app.setApplicationDisplayName("Boas-vindas" if welcome else "Ajustes")
+    app.setDesktopFileName("org.luma.boas-vindas" if welcome else "org.luma.ajustes")
+    app.setWindowIcon(QIcon.fromTheme("luma-logo" if welcome else "preferences-system"))
     engine = QQmlApplicationEngine()
     backend = Backend()
     engine.rootContext().setContextProperty("backend", backend)
-    engine.load(QUrl.fromLocalFile(str(Path(__file__).with_name("qml") / "Main.qml")))
+    qml = "BoasVindas.qml" if welcome else "Main.qml"
+    engine.load(QUrl.fromLocalFile(str(Path(__file__).with_name("qml") / qml)))
     if not engine.rootObjects():
         return 1
     if "--verificar" in sys.argv[1:]:
         # Autoteste (testes da imagem, com QT_QPA_PLATFORM=offscreen): a interface carregou; sai sem abrir a janela
-        print("luma-ajustes: interface carregada")
+        print(f"luma-ajustes: interface carregada ({qml})")
         return 0
     return app.exec()

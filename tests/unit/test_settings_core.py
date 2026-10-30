@@ -97,5 +97,34 @@ class TestTools(unittest.TestCase):
             self.assertIn("org.kde.KWin.reconfigure", argv)
 
 
+class TestWelcome(unittest.TestCase):
+    """Boas-vindas (F3-03): primeiro login sim; depois de "Concluir" não; --forcar sempre."""
+
+    def setUp(self):
+        import tempfile
+        self.cfg = tempfile.mkdtemp()
+
+    def test_first_login_shows(self):
+        self.assertTrue(core.should_show_welcome(self.cfg))
+
+    def test_done_hides_and_force_shows(self):
+        marker = core.mark_welcome_done(self.cfg)
+        self.assertEqual(marker, Path(self.cfg) / "luma" / "boas-vindas")
+        self.assertFalse(core.should_show_welcome(self.cfg))
+        self.assertTrue(core.should_show_welcome(self.cfg, force=True))
+
+    def test_new_welcome_version_shows_again(self):
+        marker = core.welcome_marker(self.cfg)
+        marker.parent.mkdir(parents=True)
+        marker.write_text("versao=0\n", encoding="utf-8")
+        self.assertTrue(core.should_show_welcome(self.cfg))
+
+    def test_actions_are_fixed_and_unprivileged(self):
+        for name, argv in core.WELCOME_ACTIONS.items():
+            with self.subTest(acao=name):
+                self.assertNotIn(argv[0], ("sudo", "pkexec", "su", "doas"))
+                self.assertNotIn("qdbus", argv[0])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

@@ -1,0 +1,5 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Boas-vindas do Luma: abre no primeiro login (autostart) e não volta depois de "Concluir".
+# --forcar abre de novo (atalho "Boas-vindas" no menu). A decisão fica em luma_ajustes.core.
+PYTHONPATH="/usr/share/luma-ajustes${PYTHONPATH:+:$PYTHONPATH}" exec python3 -m luma_ajustes --boas-vindas "$@"

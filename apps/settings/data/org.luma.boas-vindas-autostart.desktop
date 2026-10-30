@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Welcome to Luma
+Name[pt_BR]=Boas-vindas ao Luma
+Comment[pt_BR]=Abre as boas-vindas no primeiro login; depois de "Concluir" não abre mais
+Icon=luma-logo
+Exec=luma-boas-vindas
+Terminal=false
+NoDisplay=true
+X-KDE-autostart-phase=2
+OnlyShowIn=KDE;

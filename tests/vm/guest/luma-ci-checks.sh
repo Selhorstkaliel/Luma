@@ -86,9 +86,22 @@ res RAM INFO "$(free -m | awk '/^Mem:/{print "usada="$3"MiB total="$2"MiB"}') (6
 shot desktop-usuario-novo
 # Boas-vindas do primeiro login (run iso #19: "Bem-vindo ao Fedora!"); o host confere a marca por OCR
 sleep 5
+# F3-03: a boas-vindas do Luma abriu sozinha (o KWin lista a janela) e a do KDE não abriu
+bv="$(asuser busctl --user call org.kde.KWin /WindowsRunner org.kde.krunner1 Match s "Boas-vindas" 2>&1 | head -c 400)"
+kde_welcome=no; pgrep -u "$U" -f /usr/bin/plasma-welcome >/dev/null && kde_welcome=yes
 shot boas-vindas
-dump WELCOME pgrep -a -u "$U" -f welcome
+dump WELCOME pgrep -a -u "$U" -f 'welcome|boas-vindas'
+dump WELCOME echo "$bv"
+pkill -u "$U" -f 'luma_ajustes --boas-vindas' || true
 pkill -u "$U" -f plasma-welcome || true
+# "Concluir" grava a marca (mesma função do botão); depois disso o autostart não abre de novo
+asuser env PYTHONPATH=/usr/share/luma-ajustes python3 -c 'import os; from luma_ajustes import core; core.mark_welcome_done(os.path.expanduser("~/.config"))'
+asuser timeout 20 luma-boas-vindas; rc_bv=$?
+sleep 3
+de_novo=no; pgrep -u "$U" -f 'luma_ajustes --boas-vindas' >/dev/null && de_novo=yes
+ok=FALHOU
+grep -q 'Boas-vindas ao Luma' <<<"$bv" && [ "$kde_welcome" = no ] && [ "$rc_bv" = 0 ] && [ "$de_novo" = no ] && ok=PASSOU
+res F3-03 "$ok" "janela do Luma no primeiro login: $(grep -o '"Boas-vindas[^"]*"' <<<"$bv" | head -n1); boas-vindas do KDE aberta: $kde_welcome; depois de concluir: rc=$rc_bv, abriu de novo: $de_novo"
 lnf="$(kread kdeglobals KDE LookAndFeelPackage)"
 scheme="$(kread kdeglobals General ColorScheme)"
 deco="$(kread kwinrc org.kde.kdecoration2 theme)"

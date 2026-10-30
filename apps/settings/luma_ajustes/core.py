@@ -7,6 +7,7 @@ luma-appearance, plasma-apply-colorscheme, kwriteconfig6 e dbus-send. Nada exige
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 # Cores de destaque do mockup escuro (Ajustes > Aparência), na mesma ordem
 ACCENTS = {
@@ -145,3 +146,39 @@ SECTIONS = [
     ("privacidade", "Privacidade", "preferences-desktop-user-password-symbolic", ["systemsettings", "kcm_screenlocker"]),
     ("atualizacoes", "Atualizações", "system-software-update-symbolic", ["plasma-discover", "--mode", "update"]),
 ]
+
+
+# --- Boas-vindas (F3-03) -------------------------------------------------------------------------------------
+# Aparece uma vez por usuário, no primeiro login (autostart luma-boas-vindas). "Concluir" grava a marca em
+# ~/.config/luma/boas-vindas; "luma-boas-vindas --forcar" abre de novo. Substitui a boas-vindas do KDE.
+WELCOME_VERSION = "1"
+
+# Ações dos botões: comandos fixos que já existem na imagem (F3-I04 confere), sempre sem privilégios
+WELCOME_ACTIONS = {
+    "ajustes": ["luma-ajustes"],
+    "jogos": ["konsole", "--hold", "-e", "luma-jogos", "instalar"],
+    "atualizacoes": ["plasma-discover", "--mode", "update"],
+    "monitor": ["plasma-systemmonitor"],
+}
+
+
+def welcome_marker(config_home: str | Path) -> Path:
+    return Path(config_home) / "luma" / "boas-vindas"
+
+
+def should_show_welcome(config_home: str | Path, force: bool = False) -> bool:
+    """Mostra se forçado ou se a marca não existe ou é de outra versão das boas-vindas."""
+    if force:
+        return True
+    marker = welcome_marker(config_home)
+    try:
+        return marker.read_text(encoding="utf-8").strip() != f"versao={WELCOME_VERSION}"
+    except OSError:
+        return True
+
+
+def mark_welcome_done(config_home: str | Path) -> Path:
+    marker = welcome_marker(config_home)
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text(f"versao={WELCOME_VERSION}\n", encoding="utf-8")
+    return marker

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Welcome
+Name[pt_BR]=Boas-vindas
+GenericName=Welcome to Luma
+GenericName[pt_BR]=Boas-vindas ao Luma
+Comment=First steps: appearance, games and updates
+Comment[pt_BR]=Primeiros passos: aparência, jogos e atualizações
+Icon=luma-logo
+Exec=luma-boas-vindas --forcar
+Terminal=false
+Categories=Qt;KDE;System;
+Keywords=welcome;boas-vindas;inicio;

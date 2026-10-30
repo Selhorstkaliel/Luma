@@ -99,11 +99,24 @@ cmds = (core.mode_commands("claro") + core.mode_commands("escuro") + core.accent
         + core.animations_commands(False) + core.text_size_commands("Grande") + core.transparency_commands(50))
 missing = sorted({c.argv[0] for c in cmds if shutil.which(c.argv[0]) is None})
 missing += sorted({argv[0] for _sid, _l, _i, argv in core.SECTIONS if argv and shutil.which(argv[0]) is None})
+missing += sorted({argv[0] for argv in core.WELCOME_ACTIONS.values() if shutil.which(argv[0]) is None})
 print("programas ausentes:", missing or "nenhum", file=sys.stderr)
 sys.exit(1 if missing else 0)
 EOF
 }
 check F3-I04 "Ajustes: todos os programas que os botões chamam existem" ajustes_tools_exist
+check F3-I05 "Boas-vindas: interface QML carrega" env QT_QPA_PLATFORM=offscreen HOME=/tmp luma-boas-vindas --verificar
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+welcome_autostart() {
+	local f=/etc/xdg/autostart/org.luma.boas-vindas.desktop k
+	grep -qx 'Exec=luma-boas-vindas' "$f" || return 1
+	# A do KDE não pode abrir junto: todo outro autostart de boas-vindas em /etc/xdg fica Hidden=true
+	for k in /etc/xdg/autostart/*welcome*.desktop; do
+		[ -e "$k" ] || continue
+		grep -qx 'Hidden=true' "$k" || { echo "autostart ativo: $k" >&2; return 1; }
+	done
+}
+check F3-I06 "Boas-vindas do Luma no autostart, a do KDE desligada" welcome_autostart
 # shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
 ptbr_defaults() {
 	grep -qx 'LANG=pt_BR.UTF-8' /etc/locale.conf && grep -qx 'KEYMAP=br-abnt2' /etc/vconsole.conf \

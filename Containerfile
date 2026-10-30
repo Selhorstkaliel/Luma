@@ -29,6 +29,10 @@ COPY apps/settings/luma_ajustes/ /usr/share/luma-ajustes/luma_ajustes/
 COPY apps/settings/data/luma-ajustes /usr/bin/luma-ajustes
 COPY apps/settings/data/org.luma.ajustes.desktop /usr/share/applications/org.luma.ajustes.desktop
 COPY apps/settings/data/luma-ajustes.1 /usr/share/man/man1/luma-ajustes.1
+# Boas-vindas do Luma (F3-03): uma vez por usuário no primeiro login, e no menu para abrir de novo
+COPY apps/settings/data/luma-boas-vindas /usr/bin/luma-boas-vindas
+COPY apps/settings/data/org.luma.boas-vindas.desktop /usr/share/applications/org.luma.boas-vindas.desktop
+COPY apps/settings/data/org.luma.boas-vindas-autostart.desktop /etc/xdg/autostart/org.luma.boas-vindas.desktop
 # Jogos (Fase 4): lojas via Flathub sob demanda, sem RPM Fusion na imagem (decisão 0012)
 COPY gaming/bin/luma-jogos /usr/bin/luma-jogos
 COPY gaming/data/org.luma.jogos.desktop /usr/share/applications/org.luma.jogos.desktop
