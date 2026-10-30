@@ -21,7 +21,18 @@ RUN pkgs='anaconda anaconda-install-env-deps anaconda-dracut'; \
 RUN css="$(find /usr -name 'anaconda-gtk*.css' 2>/dev/null | tr '\n' ' ')"; echo "luma: CSS do Anaconda: ${css:-nenhum}"; \
     echo "luma: pixmaps antes: $(ls /usr/share/anaconda/pixmaps 2>/dev/null | tr '\n' ' ')"; \
     [ -z "$css" ] || echo "luma: imagens citadas no CSS: $(grep -hoE 'pixmaps/[A-Za-z0-9_-]+\.png' $css | sort -u | tr '\n' ' ')"; \
-    [ -z "$css" ] || grep -nEi 'url|png|svg|logo|sidebar|topbar' $css | head -n 60 | sed 's/^/luma: css: /'
+    [ -z "$css" ] || sed -n '85,135p' $css | sed 's/^/luma: css: /'; \
+    echo "luma: folhas de estilo e perfis: $(find /usr/share/anaconda /etc/anaconda -name '*.css' -o -name '*.conf' 2>/dev/null | tr '\n' ' ')"; \
+    grep -rns 'stylesheet' /etc/anaconda /usr/share/anaconda 2>/dev/null | head -n 20 | sed 's/^/luma: perfil: /'
+# O image-builder (tipo bootc-installer) monta o boot da ISO com o shim e o GRUB de /boot/efi do instalador
+# (iso #31: "No such file or directory: '/boot/efi/EFI/fedora/shimx64.efi'"); a imagem bootc os guarda no bootupd
+RUN if [ ! -e /boot/efi/EFI/fedora/shimx64.efi ]; then \
+      src=/usr/lib/bootupd/updates/EFI; \
+      if [ -d "$src" ]; then mkdir -p /boot/efi/EFI && cp -a "$src"/. /boot/efi/EFI/; \
+      else dnf -y install shim-x64 grub2-efi-x64 grub2-efi-x64-cdboot && dnf clean all; fi; \
+    fi; \
+    echo "luma: EFI do instalador: $(find /boot/efi/EFI -maxdepth 2 -type f 2>/dev/null | tr '\n' ' ')"; \
+    [ -e /boot/efi/EFI/fedora/shimx64.efi ] || echo "luma: AVISO: shimx64.efi ausente; a ISO sairá do bib (reserva)"
 COPY --from=marca /out/ /usr/share/anaconda/pixmaps/
 RUN for f in sidebar-bg.png topbar-bg.png sidebar-logo.png; do \
       if find /usr -name 'anaconda-gtk*.css' -exec grep -qs "pixmaps/$f" {} + ; then echo "luma: Anaconda usa $f: sim"; \

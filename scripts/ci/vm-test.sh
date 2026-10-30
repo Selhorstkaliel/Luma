@@ -71,9 +71,13 @@ log "ISO de teste: $(stat -c %s "$iso") bytes (não vai para o artefato)"
 BOOT_ISO="$iso" "$LAB" run & qemu_pid=$!
 log "instalação iniciada (prazo 50 min)"
 sleep 90; capture instalacao-90s
+log "tela da instalação aos 90 s (OCR): $(ocr instalacao-90s | cut -c1-300)"
 if ! wait_qemu "$qemu_pid" 3000 instalacao; then
+	# iso #31: prazo esgotado sem diagnóstico no log do job; a tela e o fim do serial vão para o log
 	capture instalacao-prazo
+	log "tela no prazo (OCR): $(ocr instalacao-prazo | cut -c1-400)"
 	cp -f "$(serial)" "$ev/serial-instalacao.log" 2>/dev/null || true
+	tail -n 40 "$ev/serial-instalacao.log" 2>/dev/null | tr -d '\r' | sed 's/^/[vm-test] serial: /' || true
 	exit 1
 fi
 cp -f "$(serial)" "$ev/serial-instalacao.log" 2>/dev/null || true
