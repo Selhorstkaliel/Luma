@@ -6,6 +6,8 @@
 Entrada: as linhas gravadas por scripts/ci/vm-medicao.sh ("MED boot=N usada_mib=... boot_s=..." e
 "MEDPROC boot=N pss_kib=... comm=..."). Usa a mediana dos boots. Critério do plano (F5-03): RAM ociosa
 <= Kinoite pura +15 % e boot <= +10 %. Sai com 1 se reprovar ou se faltar medição.
+Também compara os AVCs do boot ("MEDAVC boot=N total=... assinaturas=dominio/permissao:qtd,..."): o F5-02 fica
+explicado se todo AVC do Luma também aparece na Kinoite pura. É informação; não muda o código de saída.
 """
 from __future__ import annotations
 
@@ -37,6 +39,31 @@ def ler(caminho: str) -> tuple[dict[str, list[float]], dict[str, list[int]]]:
     return med, por_nome
 
 
+def avcs(caminho: str) -> dict[str, int]:
+    """Assinatura de AVC (domínio/permissão) -> maior quantidade num boot."""
+    maior: dict[str, int] = defaultdict(int)
+    with open(caminho, encoding="utf-8", errors="replace") as f:
+        for linha in f:
+            m = re.match(r"MEDAVC boot=\d+ total=\d+ assinaturas=(\S+)", linha)
+            if not m or m.group(1) == "nenhuma":
+                continue
+            for item in m.group(1).split(","):
+                nome, _, qtd = item.rpartition(":")
+                maior[nome] = max(maior[nome], int(qtd))
+    return maior
+
+
+def comparar_avcs(kinoite: str, luma: str) -> str:
+    ak, al = avcs(kinoite), avcs(luma)
+    texto = (f"AVCs por boot (domínio/permissão: máximo): Kinoite {dict(ak) or 'nenhum'} | Luma {dict(al) or 'nenhum'}")
+    so_luma = sorted(n for n, q in al.items() if q > ak.get(n, 0))
+    if not al:
+        return texto + "\nF5-02 PASSOU nenhum AVC no Luma"
+    if not so_luma:
+        return texto + "\nF5-02 EXPLICADO todo AVC do Luma também aparece na Kinoite pura (vem da base Fedora)"
+    return texto + f"\nF5-02 FALHOU AVCs que só o Luma tem (ou em maior número): {', '.join(so_luma)}"
+
+
 def mediana(v: list[float]) -> float:
     return statistics.median(v) if v else float("nan")
 
@@ -64,6 +91,7 @@ def comparar(kinoite: str, luma: str) -> tuple[bool, list[str]]:
     a_menos = ", ".join(f"{n} {d:+.0f}" for d, n in difs[:5] if d < 0)
     linhas.append(f"processos com mais PSS a mais no Luma (MiB): {a_mais or 'nenhum'}")
     linhas.append(f"processos com mais PSS a menos no Luma (MiB): {a_menos or 'nenhum'}")
+    linhas.extend(comparar_avcs(kinoite, luma).splitlines())
     linhas.append(f"F5-03 {'PASSOU' if ok else 'FALHOU'} Luma contra Kinoite pura, mesma VM sem 3D, mediana de 3 boots")
     return ok, linhas
 

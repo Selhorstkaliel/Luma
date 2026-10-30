@@ -17,8 +17,15 @@ if ! pgrep -u "$U" -x plasmashell >/dev/null; then
 	say "MED boot=$n erro=sem-sessao"
 	systemctl poweroff; exit 0
 fi
+# As duas boas-vindas fecham, para medir o sistema parado (medicao #3: a do Luma aberta somava 122 MiB de PSS)
 pkill -u "$U" -f plasma-welcome || true
+pkill -u "$U" -f 'luma_ajustes --boas-vindas' || true
 sleep 120
+# AVCs do boot (F5-02): domínio/permissão:quantidade, para comparar o Luma com a Kinoite pura
+avcs="$(ausearch -m avc,user_avc -ts boot 2>/dev/null | grep 'avc: *denied' \
+	| sed -n 's/.*denied *{ *\([^}]*\) *}.*scontext=[^:]*:[^:]*:\([^:]*\):.*/\2\/\1/p' | tr -s ' ' | sed 's/ $//; s/ /+/g' \
+	| sort | uniq -c | awk '{printf "%s%s:%s", (NR > 1 ? "," : ""), $2, $1}')"
+say "MEDAVC boot=$n total=$(ausearch -m avc,user_avc -ts boot 2>/dev/null | grep -c 'avc: *denied') assinaturas=${avcs:-nenhuma}"
 # Fim do boot do userspace (µs desde o início do kernel), sem depender do texto do systemd-analyze
 fin="$(busctl get-property org.freedesktop.systemd1 /org/freedesktop/systemd1 org.freedesktop.systemd1.Manager FinishTimestampMonotonic | awk '{print $2}')"
 mem() { awk -v k="$1:" '$1 == k {print int($2 / 1024)}' /proc/meminfo; }
