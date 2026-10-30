@@ -1,0 +1,61 @@
+# Dual boot em disco virtual (F6-04): o Luma instalado no espaço livre de um disco com um "Windows" simulado
+# (ESP + MSR + NTFS), sem tocar no outro sistema, e iniciando com Secure Boot. Sob demanda (Actions > dualboot >
+# Run workflow) ou quando o código do teste muda: leva cerca de 40 min.
+# Nada é publicado: a ISO de teste é destrutiva e apagada após instalar; o artefato só tem logs e capturas.
+name: dualboot
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/dualboot.yml
+      - scripts/ci/vm-dualboot.sh
+      - tests/vm/guest/luma-ci-dualboot.sh
+      - tests/vm/ks-ci.sh
+      - tests/vm/prepare-disk.sh
+permissions:
+  contents: read
+concurrency:
+  group: dualboot-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  dualboot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    env:
+      FEDORA_VERSION: "44"
+      LUMA_VERSION: "0.9.0-dev"
+      EV: /var/tmp/luma-dualboot-evidencias
+    steps:
+      - uses: actions/checkout@v4
+      - name: Liberar espaço (armazenamento do podman no mesmo caminho do host, como no iso.yml)
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache /usr/local/share/boost
+          sudo docker image prune -af >/dev/null || true
+          root_free=$(df --output=avail -k / | tail -1); mnt_free=$(df --output=avail -k /mnt | tail -1)
+          sudo mkdir -p /var/lib/containers/storage
+          if [ "$mnt_free" -gt "$root_free" ]; then
+            sudo mkdir -p /mnt/containers && sudo mount --bind /mnt/containers /var/lib/containers/storage
+            echo "WORK=/mnt/luma-dualboot" >> "$GITHUB_ENV"
+          else
+            echo "WORK=/var/tmp/luma-dualboot" >> "$GITHUB_ENV"
+          fi
+          df -h / /mnt
+      - name: Ferramentas (QEMU, OVMF, NTFS, FAT)
+        run: sudo apt-get update -q && sudo apt-get install -y -q qemu-system-x86 qemu-utils ovmf socat ntfs-3g dosfstools fdisk
+      - name: Imagem e instalador do Luma
+        run: |
+          sudo podman build --build-arg FEDORA_VERSION=$FEDORA_VERSION --build-arg LUMA_VERSION=$LUMA_VERSION -t localhost/luma:$FEDORA_VERSION .
+          sudo podman build -f build/iso/Containerfile.installer --build-arg LUMA_IMAGE=localhost/luma:$FEDORA_VERSION -t localhost/luma-installer:$FEDORA_VERSION .
+      - name: Dual boot em disco virtual (F6-04)
+        run: sudo WORK_DIR="$WORK" scripts/ci/vm-dualboot.sh localhost/luma:$FEDORA_VERSION localhost/luma-installer:$FEDORA_VERSION "$EV"
+      - name: Preparar evidências
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" "$EV" 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dualboot-${{ github.sha }}
+          path: ${{ env.EV }}/
+          retention-days: 7
+          if-no-files-found: warn

@@ -6,9 +6,16 @@
 # desligar no fim. Os arquivos do roteiro entram depois, pelo host, com o disco desligado
 # (tests/vm/prepare-disk.sh): gravar no %post falhou no run iso #15 sem mostrar o motivo.
 # A ISO feita com este arquivo é destrutiva: o CI a usa numa VM e a apaga; ela nunca vai para o artefato.
+# KS_DISCO=livre (scripts/ci/vm-dualboot.sh, F6-04): não apaga nada; instala no espaço livre, ao lado do outro
+# sistema já gravado no disco virtual, como a opção automática do Anaconda num PC com Windows.
 set -euo pipefail
 out="${1:?uso: ks-ci.sh SAIDA.toml}"
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+if [ "${KS_DISCO:-}" = livre ]; then
+	disco='clearpart --none'
+else
+	disco="$(printf 'zerombr\nclearpart --all --initlabel --disklabel=gpt')"
+fi
 base="$(python3 -c 'import sys,tomllib; print(tomllib.load(open(sys.argv[1],"rb"))["customizations"]["installer"]["kickstart"]["contents"].strip())' "$ROOT/build/iso/config.toml")"
 # Literal TOML ('''): o conteúdo vai sem escapes; nada aqui pode conter três aspas simples seguidas
 cat >"$out" <<EOF
@@ -16,8 +23,7 @@ cat >"$out" <<EOF
 [customizations.installer.kickstart]
 contents = '''
 $base
-zerombr
-clearpart --all --initlabel --disklabel=gpt
+$disco
 autopart --type=btrfs
 rootpw --lock
 user --name=teste --groups=wheel --password=luma-ci-teste --plaintext

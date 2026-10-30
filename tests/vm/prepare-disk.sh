@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Prepara o disco do Luma recém-instalado para o teste do CI, com a VM DESLIGADA (scripts/ci/vm-test.sh):
-#   [MODO=medicao] prepare-disk.sh DISCO.qcow2|DISCO.raw
+#   [MODO=medicao|dualboot] prepare-disk.sh DISCO.qcow2|DISCO.raw
 # Grava no /etc do deployment ostree o roteiro tests/vm/guest (unit + script), o login automático do
 # usuário "teste" e os rótulos SELinux (xattr security.selinux; o host não precisa ter SELinux ativo).
 # Confere cada arquivo e imprime, como evidência, hostname, idioma e teclado gravados pelo instalador.
@@ -38,7 +38,12 @@ for etc in "${etcs[@]}"; do
 	lsattr -d "$etc" 2>/dev/null | sed 's/^/[prepare-disk] atributos: /' || true
 	install -d -m 0755 "$etc/luma-ci" "$etc/systemd/system/graphical.target.wants" "$etc/plasmalogin.conf.d"
 	# MODO=medicao (scripts/ci/vm-medicao.sh): no lugar do roteiro funcional, só a medição de RAM e boot (F5-03)
-	roteiro=luma-ci-checks.sh; [ "${MODO:-}" = medicao ] && roteiro=luma-ci-medicao.sh
+	# MODO=dualboot (scripts/ci/vm-dualboot.sh): só confere o boot ao lado do outro sistema (F6-04)
+	case "${MODO:-}" in
+		medicao) roteiro=luma-ci-medicao.sh ;;
+		dualboot) roteiro=luma-ci-dualboot.sh ;;
+		*) roteiro=luma-ci-checks.sh ;;
+	esac
 	install -m 0755 "$GUEST/$roteiro" "$etc/luma-ci/luma-ci-checks.sh"
 	say "roteiro: $roteiro"
 	install -m 0644 "$GUEST/luma-ci-checks.service" "$etc/systemd/system/luma-ci-checks.service"
