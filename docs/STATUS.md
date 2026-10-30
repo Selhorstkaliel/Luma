@@ -1,18 +1,20 @@
 # Estado do projeto
 
-Atualizado em 2026-10-28. Plano: [PLANO-MESTRE.md](PLANO-MESTRE.md). Testes: [TESTS.md](TESTS.md). Decisões: [decisions/](decisions/).
+Atualizado em 2026-10-30. Plano: [PLANO-MESTRE.md](PLANO-MESTRE.md). Testes: [TESTS.md](TESTS.md). Decisões: [decisions/](decisions/).
+
+**Marco (2026-10-30):** o [run iso #23](https://github.com/Selhorstkaliel/Luma/actions/runs/40989488536) (commit d842baa) foi o primeiro inteiramente verde. Ele gera a ISO, inicia com Secure Boot até o instalador (que espera o usuário) e **instala o Luma numa VM com Secure Boot**. No sistema instalado, um usuário novo é testado de ponta a ponta (`scripts/ci/vm-test.sh`). Os critérios "VM" abaixo vêm desse teste automático: instalação automática, login automático, sem 3D. A revisão visual continua sendo do usuário, pelas capturas do artefato `…-evidencias-vm`.
 
 | Fase | Estado |
 |---|---|
-| 0: Auditoria e bootstrap | **CONCLUÍDA COM EXCEÇÕES** (2026-10-28, decisão do usuário). CI verde: lint, unit, build da imagem, `bootc container lint` e testes da imagem 12/12 ([run 40620197044](https://github.com/Selhorstkaliel/Luma/actions/runs/40620197044)). Não executados e transferidos para a Fase 1: qmllint e laboratório no PC do usuário |
-| 1: Fedora Core | **EM ANDAMENTO**, falta só o que depende da VM do usuário. Feito: imagem testada no CI (22 verificações), ISO gerada no CI, smoke test de boot com OCR, hostname `luma`, comando `luma-diagnostico`. Falta: `sudo luma-diagnostico` na VM (F1-06, F1-08, F1-09), boot com Secure Boot (F1-05), `sha256sum` (F1-02), `bootc upgrade`/`rollback` (depende de registro, decisão 0009) e varredura nmap da VM. Exceção conhecida: a ISO depende do bootc-image-builder arquivado (motivo da falha do `bootc-installer` passa a sair no manifesto) |
-| 2: Midnight Desktop | **EM ANDAMENTO**, falta só a revisão visual na VM do usuário. Na imagem: tema Luma escuro por padrão com paleta Midnight medida no mockup, decoração de janelas, barra superior e dock, Papirus, Inter, `generic-logos`, tela de boot Plymouth Luma, modo desempenho (`luma-appearance desempenho`). Fora: tela de login (o Plasma Login Manager do F44 não aceita tema próprio) e marca do instalador (Fase 6). Falta: F2-01, F2-03 e F2-04 na VM e as capturas de referência |
-| 3: Luma Apps | **EM ANDAMENTO**. Incremento 1: o app Ajustes (PySide6 + Kirigami) entra na imagem e volta ao dock, com autoteste da interface no CI; a Central de Controle está na barra superior desde a Fase 2. Próximos: Boas-vindas (Plasma Setup) e presets do Monitor do Sistema |
-| 4: Gaming | **EM ANDAMENTO** (decisão 0012). Incremento 1: GameMode, MangoHud e gamescope do Fedora na imagem; `luma-jogos` e atalho "Jogos" instalam Steam, Lutris, Heroic e Bottles via Flathub, sem root e sem RPM Fusion. NVIDIA adiada. Medição de jogos exige hardware real |
-| 5: Segurança e desempenho | **EM ANDAMENTO**. Incremento 1: controles estáticos no CI (SSH desligado, permissões, zona do firewall) e medições no `sudo luma-diagnostico` (boot, serviços lentos, RAM, energia, AVCs, roteiro de nmap). Os critérios de aceite dependem da VM (nmap, AVCs, comparação com a Kinoite), de hardware (bateria) e da decisão 0009 (updates assinados) |
-| 6: Instalador e atualizações | **EM ANDAMENTO**. Incremento 1: kickstart próprio sem nada destrutivo (o instalador deve esperar o usuário em vez de apagar o disco sozinho), teste unitário que barra comandos destrutivos, teste de boot que reprova instalação sem interação, guia `docs/usuario/recuperacao.md`. Bloqueado: canal de atualização assinado (decisão 0009). Pendente: dual boot em disco virtual, marca do Anaconda |
-| 7: Lume SDK | **EM ANDAMENTO** (decisão 0013). `lumec` 0.1 em `lume/`: Lume → Python + PySide6, palavras-chave em inglês, erros com linha:coluna, exemplos `ola`, `contador` e `fatorial`, 21 testes locais e teste de interface sem tela no CI da imagem. Fora da imagem do sistema |
-| 8: Testes e lançamento | NÃO INICIADA |
+| 0: Auditoria e bootstrap | **CONCLUÍDA COM EXCEÇÕES** (2026-10-28). Exceções transferidas para a Fase 1 e cobertas depois pelo teste do sistema instalado |
+| 1: Fedora Core | **CONCLUÍDA NO CI, COM EXCEÇÕES**. PASSOU: ISO gerada, boot com Secure Boot até o instalador, instalação, Secure Boot ativo no sistema instalado, hostname `luma`, SELinux enforcing, zona `luma`, `luma-diagnostico`, nenhuma unidade com falha. Exceções: `sha256sum` e `lab.sh check` no PC do usuário (F1-02, F1-04); `bootc upgrade`/`rollback` (decisão 0009); a ISO depende do bootc-image-builder arquivado |
+| 2: Midnight Desktop | **CONCLUÍDA NO CI; FALTA A REVISÃO VISUAL DO USUÁRIO**. PASSOU: usuário novo com Look-and-Feel escuro, papel Luma, barra superior com a Central de Controle e dock; modo desempenho; nenhuma menção a Fedora (as boas-vindas do Fedora saíram). Tela de login: não se aplica no F44 |
+| 3: Luma Apps | **EM ANDAMENTO**. PASSOU: Ajustes abre e aplica os 15 comandos sem senha e sem falha; Central de Controle no painel. Não iniciado: Boas-vindas do Luma e presets do Monitor do Sistema (F3-03) |
+| 4: Gaming | **CONCLUÍDA NO QUE A VM PERMITE**. PASSOU: `luma-jogos instalar steam` sem senha e o Steam abre na tela de login. Bloqueado: jogos rodando (hardware real, F4-02). Adiado: NVIDIA (F4-03) |
+| 5: Segurança e desempenho | **EM ANDAMENTO**. PASSOU: nmap de fora sem nenhuma porta aberta (8080 filtrada com serviço escutando). PARCIAL: 8 AVCs no boot, todos da base Fedora (`chcon` em `tuned_t`/`initrc_t`), nenhum do Luma (F5-02). Pendente: comparação com a Kinoite pura (F5-03). Bloqueado: bateria (hardware), updates assinados (decisão 0009) |
+| 6: Instalador e atualizações | **EM ANDAMENTO**. PASSOU: o instalador para no resumo sem apagar o disco (com Secure Boot); pt-BR, teclado br e fuso de São Paulo no sistema instalado (padrão da imagem, porque o Anaconda ignora esses campos do kickstart). Pendente: dual boot (F6-04), marca no Anaconda (F6-05). Bloqueado: canal de atualização assinado (decisão 0009) |
+| 7: Lume SDK | **CONCLUÍDA (0.1)**. PASSOU: testes do compilador, interface sem tela no CI e `lumec run ola.lume` no sistema instalado, com a janela "Olá do Lume" listada pelo KWin. Pendência visual: as capturas não mostram a janela (F7-01-OCR) |
+| 8: Testes e lançamento | NÃO INICIADA. Depende de máquina real, da revisão visual e da decisão 0009 |
 
 ## Origem
 A edição Fedora nasceu neste repositório a partir de `Selhorstkaliel/LUMA-OS@44903f2` (Luma 0.8.0, Debian 13). O LUMA-OS fica como histórico; ver [decisions/README.md](decisions/README.md).
@@ -30,6 +32,6 @@ A edição Fedora nasceu neste repositório a partir de `Selhorstkaliel/LUMA-OS@
 7. Arquivar o LUMA-OS. O `STATUS.md` dele diz "repositório privado", mas o repositório está público [F].
 
 ## Próximo passo
-1. CI `ci` e `iso` do incremento de tema: ler os testes F2-I01..I08 e a evidência de `XDG_CONFIG_DIRS` no log.
-2. Na VM do usuário: reinstalar com a ISO nova e criar um usuário novo (F2-01). Usuários já existentes mantêm a configuração própria; para eles: `luma-appearance escuro --reset-layout`.
-3. Ainda da Fase 1: `getenforce`, zona do firewalld e `bootc status` na VM (F1-06); boot com Secure Boot (F1-05); `sha256sum -c` (F1-02).
+1. Usuário: baixar a ISO do run iso #23 e/ou o artefato de evidências e aprovar ou reprovar o visual (capturas `desktop-usuario-novo`, `ajustes-*`, `boot-*`).
+2. Usuário: decidir a decisão 0009 (GHCR + cosign) e o hardware de teste (SSD externo ou máquina descartável).
+3. Sem depender do usuário: comparação com a Kinoite pura no CI (F5-03), marca Luma no Anaconda (F6-05) e Boas-vindas do Luma (F3-03).
