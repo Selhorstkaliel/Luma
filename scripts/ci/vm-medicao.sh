@@ -22,16 +22,25 @@ export LAB_DIR="$work/lab" VM_NAME="med-$nome" VM_NET=1 VM_AUDIO=0 VM_RAM_MB=614
 log() { printf '[vm-medicao %s] %s\n' "$nome" "$*" | tee -a "$ev/vm-medicao.log" >&2; }
 serial="$LAB_DIR/vms/$VM_NAME/serial.log"
 trap '"$LAB" kill >/dev/null 2>&1 || true' EXIT
-# Espera o QEMU terminar (o sistema desliga sozinho) com prazo
+espaco() { log "disco: $(df -h --output=avail,target "$work" | tail -n1 | tr -s ' ')"; }
+# Tela com OCR no log (sem tesseract, só a captura): diagnóstico quando a instalação ou a medição travam
+tela() {
+	"$LAB" screenshot "$ev/tela-$nome-$1.png" >/dev/null 2>&1 || return 0
+	command -v tesseract >/dev/null || return 0
+	tesseract "$ev/tela-$nome-$1.png" - -l eng 2>/dev/null | tr '\n' ' ' | cut -c1-300 | sed "s/^/[vm-medicao $nome] tela $1 (OCR): /" | tee -a "$ev/vm-medicao.log" >&2 || true
+}
+# Espera o QEMU terminar (o sistema desliga sozinho) com prazo; tela a cada 10 min
 wait_qemu() {
 	local pid="$1" limit="$2" t=0
 	while kill -0 "$pid" 2>/dev/null; do
 		sleep 10; t=$((t + 10))
-		[ "$t" -ge "$limit" ] && { log "prazo de ${limit}s esgotado"; return 1; }
+		[ $((t % 600)) = 0 ] && { tela "${t}s"; espaco; }
+		[ "$t" -ge "$limit" ] && { log "prazo de ${limit}s esgotado"; tela prazo; espaco; return 1; }
 	done
 	wait "$pid" 2>/dev/null || true
 }
 
+espaco
 "$ROOT/tests/vm/ks-ci.sh" "$work/ks-ci.toml" >/dev/null
 CONFIG="$work/ks-ci.toml" "$ROOT/build/iso/build-iso.sh" "$payload" "$installer" "$work/iso" "med-$nome" >"$ev/iso-$nome.log" 2>&1 \
 	|| { tail -n 40 "$ev/iso-$nome.log" >&2; log "ISO de teste não foi gerada"; exit 1; }
@@ -41,6 +50,7 @@ BOOT_ISO="$work/iso/luma-med-$nome-x86_64.iso" "$LAB" run & pid=$!
 log "instalação iniciada"
 wait_qemu "$pid" 3000 || exit 1
 rm -f "$work/iso/"*.iso
+espaco
 MODO=medicao "$ROOT/tests/vm/prepare-disk.sh" "$LAB_DIR/vms/$VM_NAME/disk.qcow2" 2>&1 | grep -E 'roteiro|hostname|ERRO' | tee -a "$ev/vm-medicao.log"
 : >"$serial"
 "$LAB" run & pid=$!

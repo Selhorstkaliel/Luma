@@ -115,6 +115,12 @@ welcome_autostart() {
 		[ -e "$k" ] || continue
 		grep -qx 'Hidden=true' "$k" || { echo "autostart ativo: $k" >&2; return 1; }
 	done
+	# E o módulo do KDED que abre a do KDE (run iso #25) fica com autoload=false
+	local so mod
+	for so in $(rpm -ql plasma-welcome 2>/dev/null | grep -E '/kded/[^/]+\.so$'); do
+		mod="$(basename "$so" .so)"
+		grep -qx "\[Module-${mod#kded_}\]" /etc/xdg/kded6rc || { echo "módulo KDED sem autoload=false: $mod" >&2; return 1; }
+	done
 }
 check F3-I06 "Boas-vindas do Luma no autostart, a do KDE desligada" welcome_autostart
 # shellcheck disable=SC2317,SC2329  # chamada indiretamente por check

@@ -42,7 +42,7 @@ jobs:
           echo "EV=/var/tmp/luma-medicao-evidencias" >> "$GITHUB_ENV"
           df -h / /mnt
       - name: Ferramentas (QEMU, OVMF)
-        run: sudo apt-get update -q && sudo apt-get install -y -q qemu-system-x86 qemu-utils ovmf socat
+        run: sudo apt-get update -q && sudo apt-get install -y -q qemu-system-x86 qemu-utils ovmf socat tesseract-ocr
       - name: Imagens e instaladores (Luma e Kinoite pura)
         run: |
           sudo podman build --build-arg FEDORA_VERSION=$FEDORA_VERSION --build-arg LUMA_VERSION=$LUMA_VERSION -t localhost/luma:$FEDORA_VERSION .
@@ -53,6 +53,12 @@ jobs:
           sudo podman build -f build/iso/Containerfile.installer --build-arg LUMA_IMAGE=localhost/kinoite:$FEDORA_VERSION -t localhost/kinoite-installer:$FEDORA_VERSION .
       - name: Medir a Kinoite pura
         run: sudo WORK_DIR="$WORK" scripts/ci/vm-medicao.sh kinoite localhost/kinoite:$FEDORA_VERSION localhost/kinoite-installer:$FEDORA_VERSION "$EV"
+      - name: Liberar as imagens da Kinoite (disco do runner; run medicao #2 travou na instalação do Luma)
+        run: |
+          sudo podman rmi -f localhost/kinoite-installer:$FEDORA_VERSION localhost/kinoite:$FEDORA_VERSION quay.io/fedora/fedora-kinoite:$FEDORA_VERSION || true
+          sudo podman image prune -f || true
+          sudo rm -rf "$WORK/kinoite"
+          df -h / /mnt
       - name: Medir o Luma
         run: sudo WORK_DIR="$WORK" scripts/ci/vm-medicao.sh luma localhost/luma:$FEDORA_VERSION localhost/luma-installer:$FEDORA_VERSION "$EV"
       - name: Comparar (F5-03)
