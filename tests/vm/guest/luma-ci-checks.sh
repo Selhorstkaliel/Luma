@@ -161,6 +161,15 @@ if curl -sf "$HOSTSRV/lume.tar.gz" | asuser tar -xz -C "$lumedir"; then
 	# 25 s e duas capturas: no run iso #20 a janela ainda não estava pintada aos 15 s (llvmpipe, sem 3D)
 	sleep 25
 	vivo=no; pgrep -u "$U" -f 'lumec run' >/dev/null && vivo=yes
+	# Prova direta: o KWin lista a janela pelo título (runner de janelas do KRunner). O OCR não distingue
+	# "janela atrás de outra" de "sem janela" (runs iso #20 e #21: processo vivo, captura sem a janela).
+	janelas="$(asuser busctl --user call org.kde.KWin /WindowsRunner org.kde.krunner1 Match s "Olá do Lume" 2>&1 | head -c 600)"
+	dump JANELA echo "$janelas"
+	# Traz a janela para a frente antes da captura: Run(id do primeiro resultado, ação vazia)
+	jid="$(grep -o '"[^"]*"' <<<"$janelas" | head -n1 | tr -d '"')"
+	[ -n "$jid" ] && asuser busctl --user call org.kde.KWin /WindowsRunner org.kde.krunner1 Run ss "$jid" "" >/dev/null 2>&1
+	sleep 3
+	res F7-01-JANELA "$(grep -q 'Olá do Lume' <<<"$janelas" && echo PASSOU || echo FALHOU)" "KWin lista a janela do ola.lume: $(tr '\n' ' ' <<<"$janelas" | cut -c1-200)"
 	shot lume-ola
 	sleep 10
 	shot lume-ola-2

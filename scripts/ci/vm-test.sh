@@ -111,7 +111,7 @@ while kill -0 "$qemu_pid" 2>/dev/null; do
 			"LUMACI BEGIN"*) begun=yes; log "${l#LUMACI }" ;;
 			"LUMACI RESULT "*|"LUMACI END"*|"LUMACI AVISO"*) log "${l#LUMACI }" ;;
 			# Detalhes que só iam para o serial (o artefato nem sempre dá para baixar)
-			"LUMACI DATA AVC "*|"LUMACI DATA AJUSTES "*|"LUMACI DATA FAILED "*|"LUMACI DATA PLASMALOGIN "*|"LUMACI DATA SESSAOENV "*|"LUMACI DATA WELCOME "*) log "${l#LUMACI DATA }" ;;
+			"LUMACI DATA AVC "*|"LUMACI DATA AJUSTES "*|"LUMACI DATA FAILED "*|"LUMACI DATA PLASMALOGIN "*|"LUMACI DATA SESSAOENV "*|"LUMACI DATA JANELA "*|"LUMACI DATA WELCOME "*) log "${l#LUMACI DATA }" ;;
 		esac
 	done
 	sleep 2; t=$((t + 2))
@@ -138,8 +138,9 @@ if grep -q 'Nmap done' "$ev/nmap-tcp.txt" 2>/dev/null && ! grep -Eq '^[0-9]+/tcp
 else
 	results+=$'\n'"F5-01 FALHOU $(grep -E '^[0-9]+/tcp|Nmap done|Failed|0 hosts' "$ev/nmap-tcp.txt" 2>/dev/null | tr '\n' ' ' || echo 'nmap não executado')"
 fi
-grep -Eqi 'Ol[aá], Luma|Ol[aá] do Lume' <<<"$(ocr lume-ola) $(ocr lume-ola-2)" && results+=$'\n'"F7-01-OCR PASSOU janela com o texto do ola.lume" \
-	|| results+=$'\n'"F7-01-OCR FALHOU OCR: $(ocr lume-ola-2 | cut -c1-200)"
+# Evidência visual só; a prova da janela é o F7-01-JANELA (o KWin lista a janela pelo título)
+grep -Eqi 'Ol[aá], Luma|Ol[aá] do Lume' <<<"$(ocr lume-ola) $(ocr lume-ola-2)" && results+=$'\n'"F7-01-OCR INFO texto do ola.lume lido na captura" \
+	|| results+=$'\n'"F7-01-OCR INFO texto não lido na captura (ver lume-ola.png): $(ocr lume-ola | cut -c1-120)"
 grep -Eqi 'Ajustes|Apar[eê]ncia|Settings' <<<"$(ocr ajustes-aberto)" && results+=$'\n'"F3-01-OCR PASSOU janela do Ajustes" \
 	|| results+=$'\n'"F3-01-OCR FALHOU OCR: $(ocr ajustes-aberto | cut -c1-200)"
 results+=$'\n'"F2-03 INFO capturas boot-06s/12s/20s anexadas (logotipo sem texto: conferência visual)"
