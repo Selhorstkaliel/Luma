@@ -92,7 +92,9 @@ kde_welcome=no; pgrep -u "$U" -f /usr/bin/plasma-welcome >/dev/null && kde_welco
 shot boas-vindas
 dump WELCOME pgrep -a -u "$U" -f 'welcome|boas-vindas'
 dump WELCOME echo "$bv"
-dump WELCOME asuser busctl --user call org.kde.kded6 /kded org.kde.kded6 loadedModules
+kded="$(asuser busctl --user call org.kde.kded6 /kded org.kde.kded6 loadedModules 2>&1)"
+dump WELCOME echo "$kded"
+grep -q plasma_welcome <<<"$kded" && kde_welcome=yes
 pkill -u "$U" -f 'luma_ajustes --boas-vindas' || true
 pkill -u "$U" -f plasma-welcome || true
 # "Concluir" grava a marca (mesma função do botão); depois disso o autostart não abre de novo

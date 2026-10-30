@@ -55,19 +55,19 @@ grep -qix 'pt_BR.utf8' <<<"$(locale -a)" || { echo "luma: locale pt_BR.UTF-8 aus
 # própria do Luma é o F3-03. A evidência no log diz o que sobrou.
 if rpm -q plasma-welcome-fedora >/dev/null 2>&1; then dnf -y remove plasma-welcome-fedora; fi
 echo "luma: pacotes de boas-vindas restantes: $(rpm -qa '*welcome*' | tr '\n' ' ')"
-# A boas-vindas do KDE (plasma-welcome) não abre mais sozinha: o primeiro login mostra a do Luma (F3-03).
-# O programa continua instalado (o Plasma o usa nas notas de versão depois de uma atualização).
-echo "luma: arquivos do plasma-welcome (evidência): $(rpm -ql plasma-welcome 2>/dev/null | grep -Ei 'autostart|kded|\.desktop$' | tr '\n' ' ')"
-# No Plasma 6 quem abre a boas-vindas é um módulo do KDED, não um autostart (README do plasma-welcome; run iso #25:
-# abriu mesmo sem autostart). Desliga o módulo para todos os usuários: [Module-<nome>] autoload=false no kded6rc.
-# [H] O nome do módulo é o do arquivo do plugin; grava com e sem o prefixo "kded_".
-for so in $(rpm -ql plasma-welcome 2>/dev/null | grep -E '/kded/[^/]+\.so$'); do
-	mod="$(basename "$so" .so)"
-	for nome in "$mod" "${mod#kded_}"; do
-		printf '\n[Module-%s]\nautoload=false\n' "$nome" >>/etc/xdg/kded6rc
-		echo "luma: módulo KDED desligado: $nome"
-	done
-done
+# A boas-vindas do KDE (plasma-welcome) não abre mais: o primeiro login mostra a do Luma (F3-03). Quem a abre é o
+# módulo kded_plasma_welcome do KDED, não um autostart (run iso #25). "autoload=false" no /etc/xdg/kded6rc não
+# impediu a carga (run iso #26: módulo em loadedModules e janela aberta), então o pacote sai. Perde-se a página de
+# novidades do Plasma após atualização. "rpm -e" recusa se outro pacote exigir o plasma-welcome; aí sai só o plugin.
+if rpm -q plasma-welcome >/dev/null 2>&1; then
+	if rpm -e plasma-welcome; then
+		echo "luma: plasma-welcome removido"
+	else
+		for so in $(rpm -ql plasma-welcome | grep -E '/kded/[^/]+\.so$'); do
+			rm -f "$so"; echo "luma: plasma-welcome exigido por outro pacote; plugin do KDED apagado: $so"
+		done
+	fi
+fi
 for f in /etc/xdg/autostart/*welcome*.desktop; do
 	case "$f" in *org.luma.*|*'*'*) continue ;; esac
 	grep -qx 'Hidden=true' "$f" || sed -i '/^\[Desktop Entry\]/a Hidden=true' "$f"
