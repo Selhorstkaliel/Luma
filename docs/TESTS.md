@@ -86,7 +86,7 @@ Motivo: na VM o sistema instalado tinha o visual da Kinoite (comentário do usu�
 | F7-U01 | Lexer, parser e verificador (posições, precedência, erros) | `lume/tests/test_lume_frontend.py` | PASSOU (local, 12/12) | — |
 | F7-U02 | Semântica do Python gerado (recursão, laços, closures, if/else if, nomes reservados, erro de execução com linha do .lume) | `lume/tests/test_lume_semantics.py` | PASSOU (local, 9/9) | — |
 | F7-I01 | Janela do `ola.lume` e botão do `contador.lume` funcionam sem tela | `test_lume_ui.py` (offscreen) | PASSOU localmente (2026-10-29, PySide6 6.12.0 via pip, Qt offscreen, 2/2: título e visibilidade da janela; 2 cliques → "Cliques: 2"). No CI, dentro da imagem com o `python3-pyside6` do Fedora: PASSOU (ci #24 = 40883325392 e ci #25 = 40887691692; o passo sai com erro se o Qt faltar, `LUME_EXIGIR_QT=1`) | — |
-| F7-01 | "hello world" Lume com janela Qt no Luma (critério da Fase 7) | VM: `python3 lume/bin/lumec run lume/examples/ola.lume` | PASSOU (run iso #18 = 40931657896, commit b9bc3ad, sistema instalado em QEMU + OVMF com Secure Boot): `lumec run ola.lume` como o usuário novo; janela confirmada por OCR com o texto do programa | — |
+| F7-01 | "hello world" Lume com janela Qt no Luma (critério da Fase 7) | VM: `python3 lume/bin/lumec run lume/examples/ola.lume` | PASSOU (run iso #22 = 40982053266, commit e8b7bb3): `lumec run ola.lume` como o usuário novo e o **KWin lista a janela** "Olá do Lume" na Área de trabalho 1 (`busctl … /WindowsRunner org.kde.krunner1 Match` → `"Ol\303\241 do Lume" "wayland"`); o OCR leu o texto da janela no run #18; nos #20–#22 a captura não mostrou a janela (pendência visual, ver `lume-ola.png`) | — |
 
 ## Teste do sistema instalado no CI (desde 2026-10-29)
 Os critérios marcados "VM" acima passam a ter uma execução automática no workflow `iso`, depois do envio da ISO do usuário (`scripts/ci/vm-test.sh`):
@@ -109,7 +109,8 @@ Resultados:
 - iso #18 (b9bc3ad): F6-02, F3-01, F2-01, F3-02 e F7-01 passam a PASSOU; ficam F5-02 (AVCs da base) e F1-10. Boot 15,7 s; RAM 1803 MiB.
 - iso #19 (969cc3c): F5-02 sem nenhum AVC do Luma; causas das duas unidades com falha (base); dois achados novos: o Steam não abriu (o PASSOU anterior era falso, por OCR frouxo) e a boas-vindas diz "Fedora" (F2-06).
 - iso #20 (5512c1e): F1-10, F2-06 e F4-01 PASSOU; todos os demais critérios de VM PASSOU, exceto o F5-02 (PARCIAL: 8 AVCs, 0 do Luma) e o OCR da janela do Lume (captura sem texto legível; o processo estava vivo e o mesmo OCR passou no #18), que agora tem espera maior, duas capturas e OCR ampliado. Boot 23,2 s; RAM 1675 MiB.
-- iso #21 (d6702c8): mesmo quadro do #20. O OCR do Lume de novo sem a janela (processo vivo). A prova passa a ser o KWin listar a janela pelo título (F7-01-JANELA), e o OCR vira evidência visual. Medidas: boot 22,9 s; RAM 1793 MiB usada 60 s após o login, sem apps abertos (VM de 6 GiB, sem comparação com a Kinoite pura ainda).
+- iso #21 (d6702c8): mesmo quadro do #20. O OCR do Lume de novo sem a janela (processo vivo). A prova passa a ser o KWin listar a janela pelo título (F7-01-JANELA), e o OCR vira evidência visual.
+- iso #22 (e8b7bb3): o KWin listou a janela do Lume ("Ol\303\241 do Lume", Área de trabalho 1); o FALHOU do F7-01-JANELA foi meu (o `busctl` escreve UTF-8 em octal e o grep procurava "Olá"). Corrigido. Todo o resto igual ao #20/#21. Medidas: boot 22,9 s; RAM 1793 MiB usada 60 s após o login, sem apps abertos (VM de 6 GiB, sem comparação com a Kinoite pura ainda).
 
 ## Regressão herdada do LUMA-OS
 Os critérios E1–E9 do LUMA-OS (`docs/TESTS.md` dele) servem de checklist das Fases 1, 2, 5 e 6. Cada um precisa passar de novo no Fedora ou ter a exceção registrada na decisão correspondente.

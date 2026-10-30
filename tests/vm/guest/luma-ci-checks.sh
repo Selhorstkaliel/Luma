@@ -169,7 +169,8 @@ if curl -sf "$HOSTSRV/lume.tar.gz" | asuser tar -xz -C "$lumedir"; then
 	jid="$(grep -o '"[^"]*"' <<<"$janelas" | head -n1 | tr -d '"')"
 	[ -n "$jid" ] && asuser busctl --user call org.kde.KWin /WindowsRunner org.kde.krunner1 Run ss "$jid" "" >/dev/null 2>&1
 	sleep 3
-	res F7-01-JANELA "$(grep -q 'Olá do Lume' <<<"$janelas" && echo PASSOU || echo FALHOU)" "KWin lista a janela do ola.lume: $(tr '\n' ' ' <<<"$janelas" | cut -c1-200)"
+	# O busctl escreve o UTF-8 em octal: "Olá" chega como "Ol\303\241" (run iso #22)
+	res F7-01-JANELA "$(grep -Eq 'Ol(á|\\303\\241) do Lume' <<<"$janelas" && echo PASSOU || echo FALHOU)" "KWin lista a janela do ola.lume: $(tr '\n' ' ' <<<"$janelas" | cut -c1-200)"
 	shot lume-ola
 	sleep 10
 	shot lume-ola-2
