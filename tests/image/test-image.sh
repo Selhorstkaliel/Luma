@@ -129,6 +129,14 @@ ptbr_defaults() {
 		&& grep -qix 'pt_BR.utf8' <<<"$(locale -a)"
 }
 check F6-I01 "pt-BR, teclado br e fuso de São Paulo como padrão do sistema instalado" ptbr_defaults
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+canal_assinado() {
+	# Sem a chave do projeto (decisão 0009 ainda sem chave), a imagem não pode ter política pela metade
+	if [ ! -s /etc/pki/containers/luma-cosign.pub ]; then ! grep -q 'selhorstkaliel/luma' /etc/containers/policy.json; return; fi
+	python3 -c 'import json,sys; r=json.load(open("/etc/containers/policy.json"))["transports"]["docker"]["ghcr.io/selhorstkaliel/luma"]; sys.exit(0 if r[0]["type"]=="sigstoreSigned" and r[0]["keyPath"]=="/etc/pki/containers/luma-cosign.pub" else 1)' \
+		&& grep -q 'use-sigstore-attachments: true' /etc/containers/registries.d/luma.yaml
+}
+check F6-I02 "canal ghcr.io/selhorstkaliel/luma só aceita imagem assinada pela chave do projeto" canal_assinado
 check F4-I01 "jogos: gamemoderun, mangohud e gamescope presentes" bash -c 'command -v gamemoderun && command -v mangohud && command -v gamescope'
 check F4-I02 "jogos: luma-jogos gera os comandos Flatpak de usuário" bash -c 'luma-jogos --simular instalar steam | grep -q "flatpak install --user"'
 # A Kinoite traz arquivos .repo do RPM Fusion DESABILITADOS (fedora-workstation-repositories) [H]; a decisão

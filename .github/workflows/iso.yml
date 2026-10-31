@@ -34,10 +34,17 @@ concurrency:
 jobs:
   iso:
     runs-on: ubuntu-24.04
-    timeout-minutes: 210
+    timeout-minutes: 240
+    # packages: write só para publicar no GHCR no fim, depois de todos os testes (decisão 0009)
+    permissions:
+      contents: read
+      packages: write
     env:
       FEDORA_VERSION: "44"
       LUMA_VERSION: "0.9.0-dev"
+      # Único branch que publica (o de desenvolvimento do Luma); push em outro branch só testa
+      PUBLICAR_BRANCH: claude/eager-franklin-mb8qmf
+      IMAGEM_GHCR: ghcr.io/selhorstkaliel/luma
     steps:
       - uses: actions/checkout@v4
       - name: Liberar espaço e pôr o armazenamento do podman no disco com mais espaço
@@ -117,3 +124,47 @@ jobs:
           path: ${{ env.EV }}/
           retention-days: 7
           if-no-files-found: warn
+      # Publicação (decisão 0009, autorizada pelo usuário em 2026-10-31): só a imagem que passou em TODOS os testes
+      # acima, só no push do branch de desenvolvimento, e só assinada. Sem a chave do projeto no repositório ou sem
+      # os segredos COSIGN_PRIVATE_KEY/COSIGN_PASSWORD, nada é publicado (aviso no run). Nunca sem assinatura.
+      - name: Publicação - pré-requisitos (chave pública no repositório e segredos do cosign)
+        id: pub
+        if: success() && github.event_name == 'push' && github.ref_name == env.PUBLICAR_BRANCH
+        env:
+          TEM_SEGREDO: ${{ secrets.COSIGN_PRIVATE_KEY != '' && secrets.COSIGN_PASSWORD != '' }}
+        run: |
+          if [ "$TEM_SEGREDO" = true ] && [ -s configs/etc/pki/containers/luma-cosign.pub ]; then
+            echo "publicar=sim" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Imagem NÃO publicada: faltam os segredos COSIGN_PRIVATE_KEY/COSIGN_PASSWORD ou configs/etc/pki/containers/luma-cosign.pub (docs/decisions/0009-build-ci-assinatura.md)"
+            echo "publicar=nao" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: sigstore/cosign-installer@v3.7.0
+        if: steps.pub.outputs.publicar == 'sim'
+        with:
+          cosign-release: v2.4.1
+      - name: Publicar no GHCR e assinar com cosign (pelo digest)
+        if: steps.pub.outputs.publicar == 'sim'
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          sudo podman image exists localhost/luma:$FEDORA_VERSION
+          tag="$FEDORA_VERSION-${GITHUB_SHA::7}"
+          echo "$TOKEN" | sudo podman login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          sudo podman push --digestfile "$RUNNER_TEMP/digest" localhost/luma:$FEDORA_VERSION "docker://$IMAGEM_GHCR:$tag"
+          sudo podman push localhost/luma:$FEDORA_VERSION "docker://$IMAGEM_GHCR:$FEDORA_VERSION"
+          digest="$(sudo cat "$RUNNER_TEMP/digest")"
+          echo "publicado: $IMAGEM_GHCR:$tag e :$FEDORA_VERSION ($digest)"
+          cosign login ghcr.io -u "$GITHUB_ACTOR" -p "$TOKEN"
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "$IMAGEM_GHCR@$digest"
+          cosign verify --key configs/etc/pki/containers/luma-cosign.pub "$IMAGEM_GHCR:$FEDORA_VERSION" >/dev/null
+          echo "assinatura conferida com configs/etc/pki/containers/luma-cosign.pub"
+          # [H] Pacote novo no GHCR nasce privado; o sistema instalado só baixa atualização se ele for público
+          if curl -fsS "https://ghcr.io/token?scope=repository:${IMAGEM_GHCR#ghcr.io/}:pull" >/dev/null; then
+            echo "pacote público: atualização anônima possível"
+          else
+            echo "::warning::O pacote $IMAGEM_GHCR não é público: GitHub > Packages > luma > Package settings > Change visibility > Public"
+          fi

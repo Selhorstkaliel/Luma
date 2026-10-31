@@ -21,3 +21,26 @@ O host de desenvolvimento tem 7,7 GiB de RAM, e o WSL já travou durante um buil
 
 ## Atualização em 2026-10-29
 Perguntado de novo, com as consequências explicadas (imagem pública e permanente no GHCR, chave cosign gerada pelo usuário e guardada como segredo do repositório). Resposta do usuário: **"ainda não"**. Continua sem registro e sem assinatura. Atualização assinada e reversão (TESTS F5-05) seguem BLOQUEADAS por esta decisão.
+
+## Atualização em 2026-10-31: publicação autorizada
+O usuário escolheu **"Publicar agora"**. Status: **aceita**, com a execução dependendo de um passo dele (abaixo).
+
+### Como fica
+- **Onde:** o `iso.yml` publica `ghcr.io/selhorstkaliel/luma`, com as tags `44` e `44-<commit>`.
+- **Quando:** só no push do branch de desenvolvimento e só depois de passarem os testes da imagem, a ISO, o boot com Secure Boot e o sistema instalado. É exatamente a imagem testada.
+- **Assinatura:** cosign com **par de chaves do projeto**, assinando pelo digest. A chave privada fica em `COSIGN_PRIVATE_KEY`/`COSIGN_PASSWORD` (segredos do repositório) e a pública em `configs/etc/pki/containers/luma-cosign.pub`. Sem esses itens o CI **não publica** e avisa no run. Nunca publica imagem sem assinatura.
+- **Política na imagem** (`build/image/build.sh`, conferida pelo F6-I02): `ghcr.io/selhorstkaliel/luma` só é aceita com `sigstoreSigned` pela chave do projeto. As outras origens (Flatpak, toolbox) seguem a política da base.
+- **Por que par de chaves, e não assinatura sem chave do GitHub [F]:** o `containers-policy.json` (containers/image) só aceita `subjectEmail` no bloco `fulcio`. A identidade de workflow do GitHub não pode ser exigida pelo `bootc`/podman no sistema instalado. É o mesmo motivo de o Universal Blue usar par de chaves.
+
+### Passo do usuário (necessário uma vez)
+1. No computador: `sudo dnf install cosign` e `cosign generate-key-pair` (pede uma senha; gera `cosign.key` e `cosign.pub`). Guarde `cosign.key` e a senha fora do repositório.
+2. No GitHub, em Settings > Secrets and variables > Actions, crie os segredos:
+   - `COSIGN_PRIVATE_KEY`, com o conteúdo de `cosign.key`;
+   - `COSIGN_PASSWORD`, com a senha.
+3. Envie o conteúdo de `cosign.pub`, que é público, para entrar em `configs/etc/pki/containers/luma-cosign.pub`.
+4. Depois da primeira publicação: GitHub > Packages > luma > Package settings > visibilidade **Public**. [H] O pacote novo nasce privado, e o CI avisa se ele continuar privado.
+
+### Riscos aceitos
+- O CI vira o ponto único de confiança: quem tiver escrita no repositório publica.
+- A chave privada vazada permite assinar imagem maliciosa; a mitigação é trocar o par e publicar a nova chave pública numa imagem.
+- A imagem é pública e permanece em cache mesmo se apagada.

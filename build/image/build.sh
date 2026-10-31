@@ -106,6 +106,28 @@ grep -rsn 'LookAndFeelPackage' /etc/xdg /usr/share/kde-settings || true
 echo "---"
 
 
+# Canal de atualização assinado (decisão 0009): com a chave pública do projeto na imagem, o sistema só aceita
+# ghcr.io/selhorstkaliel/luma assinada por ela (cosign, assinatura anexada ao registro). As demais origens seguem
+# a política da base (Flatpak, toolbox). Sem a chave no repositório, nada muda e o CI não publica.
+if [ -s /etc/pki/containers/luma-cosign.pub ]; then
+	python3 - <<'PY'
+import json
+p = "/etc/containers/policy.json"
+pol = json.load(open(p))
+pol.setdefault("transports", {}).setdefault("docker", {})["ghcr.io/selhorstkaliel/luma"] = [{
+    "type": "sigstoreSigned",
+    "keyPath": "/etc/pki/containers/luma-cosign.pub",
+    "signedIdentity": {"type": "matchRepository"},
+}]
+json.dump(pol, open(p, "w"), indent=2)
+PY
+	mkdir -p /etc/containers/registries.d
+	printf 'docker:\n  ghcr.io/selhorstkaliel/luma:\n    use-sigstore-attachments: true\n' >/etc/containers/registries.d/luma.yaml
+	echo "luma: política de assinatura do canal ghcr.io/selhorstkaliel/luma ativa"
+else
+	echo "luma: sem chave cosign do projeto; política de assinatura não aplicada (decisão 0009)"
+fi
+
 # SELinux continua enforcing (padrão do Fedora); falhar se a base vier diferente
 grep -qx 'SELINUX=enforcing' /etc/selinux/config || { echo "SELinux não está enforcing em /etc/selinux/config" >&2; exit 1; }
 
