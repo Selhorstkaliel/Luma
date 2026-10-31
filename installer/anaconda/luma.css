@@ -1,0 +1,25 @@
+/* Marca Luma no Anaconda (F6-05), carregada pelo perfil luma.conf. Midnight: fundo #080D19.
+ * O anaconda-gtk.css usa @anaconda_bg_color na barra lateral (.logo-sidebar) e na faixa superior (#nav-box)
+ * e deixa .logo vazio para o produto. Arte original do Projeto Luma (installer/anaconda/). */
+@define-color anaconda_bg_color #080D19;
+
+.logo-sidebar {
+    background-color: #080D19;
+    background-image: url('/usr/share/anaconda/pixmaps/luma/sidebar-bg.png');
+    background-repeat: no-repeat;
+    background-position: 0 0;
+}
+
+.logo {
+    background-image: url('/usr/share/anaconda/pixmaps/luma/sidebar-logo.png');
+    background-position: 50% 24px;
+    background-repeat: no-repeat;
+    background-color: transparent;
+}
+
+AnacondaSpokeWindow #nav-box {
+    background-color: #080D19;
+    background-image: url('/usr/share/anaconda/pixmaps/luma/topbar-bg.png');
+    background-repeat: repeat;
+    color: white;
+}
