@@ -28,7 +28,11 @@ RUN css="$(find /usr -name 'anaconda-gtk*.css' 2>/dev/null | tr '\n' ' ')"; echo
 # (iso #31: "No such file or directory: '/boot/efi/EFI/fedora/shimx64.efi'"). Na imagem bootc eles ficam fora de
 # /boot (iso #32: /usr/lib/bootupd/updates/EFI não trouxe nada); [H] no Fedora 44, em /usr/lib/efi/<pacote>/<versão>/EFI.
 # iso #33: depois do shim, falta o GRUB de CD (gcdx64.efi, pacote grub2-efi-x64-cdboot)
-RUN dnf -y install grub2-efi-x64-cdboot && dnf clean all || echo "luma: AVISO: grub2-efi-x64-cdboot não instalou"
+# iso #34: depois do EFI, o osbuild falhou com "No module named 'mako'" (modelos do lorax que montam a ISO).
+# [H] Lista de pacotes do instalador para o bootc-installer, conforme a doc do osbuild; os que não existirem são pulados.
+RUN dnf -y install --skip-unavailable grub2-efi-x64-cdboot python3-mako lorax-templates-generic squashfs-tools \
+      dracut-config-generic dracut-network net-tools prefixdevname biosdevname && dnf clean all \
+    || echo "luma: AVISO: pacotes do instalador para o image-builder não instalaram"
 RUN echo "luma: arquivos EFI na imagem: $(find /usr/lib/bootupd /usr/lib/efi -type f 2>/dev/null | head -n 40 | tr '\n' ' ')"; \
     find /usr/lib/efi /usr/lib/bootupd/updates -type f -path '*/EFI/*' 2>/dev/null | while read -r f; do \
       dest="/boot/efi/EFI/${f#*/EFI/}"; mkdir -p "$(dirname "$dest")"; cp -n "$f" "$dest"; \
