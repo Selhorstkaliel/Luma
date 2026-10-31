@@ -27,12 +27,16 @@ RUN css="$(find /usr -name 'anaconda-gtk*.css' 2>/dev/null | tr '\n' ' ')"; echo
 # O image-builder (tipo bootc-installer) monta o boot da ISO com o shim e o GRUB de /boot/efi do instalador
 # (iso #31: "No such file or directory: '/boot/efi/EFI/fedora/shimx64.efi'"). Na imagem bootc eles ficam fora de
 # /boot (iso #32: /usr/lib/bootupd/updates/EFI não trouxe nada); [H] no Fedora 44, em /usr/lib/efi/<pacote>/<versão>/EFI.
+# iso #33: depois do shim, falta o GRUB de CD (gcdx64.efi, pacote grub2-efi-x64-cdboot)
+RUN dnf -y install grub2-efi-x64-cdboot && dnf clean all || echo "luma: AVISO: grub2-efi-x64-cdboot não instalou"
 RUN echo "luma: arquivos EFI na imagem: $(find /usr/lib/bootupd /usr/lib/efi -type f 2>/dev/null | head -n 40 | tr '\n' ' ')"; \
     find /usr/lib/efi /usr/lib/bootupd/updates -type f -path '*/EFI/*' 2>/dev/null | while read -r f; do \
       dest="/boot/efi/EFI/${f#*/EFI/}"; mkdir -p "$(dirname "$dest")"; cp -n "$f" "$dest"; \
     done; \
     echo "luma: EFI do instalador: $(find /boot/efi/EFI -type f 2>/dev/null | tr '\n' ' ')"; \
-    [ -e /boot/efi/EFI/fedora/shimx64.efi ] || echo "luma: AVISO: shimx64.efi ausente; a ISO sairá do bib (reserva)"
+    for f in shimx64.efi gcdx64.efi; do \
+      [ -e "/boot/efi/EFI/fedora/$f" ] || echo "luma: AVISO: $f ausente; a ISO sairá do bib (reserva)"; \
+    done
 # Marca Luma (F6-05): o Anaconda aplica a marca por perfil (/etc/anaconda/profile.d, custom_stylesheet), não por
 # troca dos PNGs genéricos (iso #32). O perfil luma é escolhido pelo ID=luma do os-release.
 RUN echo "luma: perfil de referência: $(cat /etc/anaconda/profile.d/fedora-silverblue.conf 2>/dev/null | grep -v '^#' | tr '\n' ' ')"
