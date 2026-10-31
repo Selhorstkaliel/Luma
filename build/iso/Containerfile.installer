@@ -41,6 +41,12 @@ RUN echo "luma: arquivos EFI na imagem: $(find /usr/lib/bootupd /usr/lib/efi -ty
     for f in shimx64.efi gcdx64.efi; do \
       [ -e "/boot/efi/EFI/fedora/$f" ] || echo "luma: AVISO: $f ausente; a ISO sairá do bib (reserva)"; \
     done
+# iso #36: os modelos do lorax pararam em "symlink ../run/install mnt/install" (FileNotFoundError): na imagem
+# atômica /mnt e /media apontam para var/, que não existe na árvore. No instalador (ambiente live, nunca o
+# sistema instalado) eles viram diretórios reais; o Anaconda também monta o destino em /mnt/sysroot.
+RUN for d in /mnt /media; do \
+      if [ -L "$d" ]; then echo "luma: $d era link para $(readlink "$d"); vira diretório"; rm -f "$d"; mkdir -p "$d"; fi; \
+    done
 # Marca Luma (F6-05): o Anaconda aplica a marca por perfil (/etc/anaconda/profile.d, custom_stylesheet), não por
 # troca dos PNGs genéricos (iso #32). O perfil luma é escolhido pelo ID=luma do os-release.
 RUN echo "luma: perfil de referência: $(cat /etc/anaconda/profile.d/fedora-silverblue.conf 2>/dev/null | grep -v '^#' | tr '\n' ' ')"
