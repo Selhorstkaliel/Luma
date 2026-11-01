@@ -28,9 +28,17 @@ shot() { say "SHOT $1"; wait_host "shot-$1"; }
 say "BEGIN $(date -u +%FT%TZ)"
 uid="$(id -u "$U" 2>/dev/null || true)"
 home="$(getent passwd "$U" | cut -d: -f6)"
+# O socket Wayland da sessão não tem nome fixo (iso #38: wayland-1; antes wayland-0): usa o que existir
+wayland_sock() {
+	local s
+	for s in /run/user/"$uid"/wayland-[0-9]*; do
+		[ -S "$s" ] && { echo "${s##*/}"; return; }
+	done
+	echo wayland-0
+}
 asuser() {
 	runuser -u "$U" -- env HOME="$home" USER="$U" XDG_RUNTIME_DIR="/run/user/$uid" \
-		DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" WAYLAND_DISPLAY=wayland-0 \
+		DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" WAYLAND_DISPLAY="$(wayland_sock)" \
 		QT_QPA_PLATFORM=wayland XDG_CURRENT_DESKTOP=KDE "$@"
 }
 kread() { asuser kreadconfig6 --file "$1" --group "$2" --key "$3"; }
