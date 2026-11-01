@@ -32,6 +32,9 @@ A edição Fedora nasceu neste repositório a partir de `Selhorstkaliel/LUMA-OS@
 7. Arquivar o LUMA-OS. O `STATUS.md` dele diz "repositório privado", mas o repositório está público [F].
 
 ## Próximo passo
-1. Usuário: baixar a ISO do run iso #23 e/ou o artefato de evidências e aprovar ou reprovar o visual (capturas `desktop-usuario-novo`, `ajustes-*`, `boot-*`).
-2. Usuário: decidir a decisão 0009 (GHCR + cosign) e o hardware de teste (SSD externo ou máquina descartável).
-3. Sem depender do usuário: fechar o F3-03 (boas-vindas do KDE fora) e marca Luma no Anaconda (F6-05).
+1. Usuário: seguir [docs/usuario/passos-do-usuario.md](usuario/passos-do-usuario.md):
+   - A: chave cosign para a publicação assinada;
+   - B: revisão visual das capturas;
+   - C (opcional): ISO numa VM;
+   - D: hardware de teste.
+2. Sem depender do usuário: interface interativa do Anaconda na ISO do image-builder (F6-05; o sistema instalado por ela já passa em todos os critérios).
