@@ -53,4 +53,37 @@ else verdict=INCONCLUSIVO; fi
 	echo "texto final (OCR): $(cut -c1-400 <<<"$final")"
 	echo "F6-05 INFO cor da barra lateral (x=12, y=420 / y=700; Midnight ~ 8 13 25): $cor_lateral"
 } | tee "$out/boot-resultado.txt"
+# BOOT_DIAG=1 (workflow instalador-ib): com a interface gráfica do Anaconda sem aparecer, o shell do TTY2 mostra
+# por quê. As teclas vão pelo QMP (teclado us do instalador); a tela vai para o log por OCR.
+digitar() {
+	local t="$1" i c k
+	for ((i = 0; i < ${#t}; i++)); do
+		c="${t:i:1}"
+		case "$c" in
+			[a-z0-9]) k="$c" ;;
+			[A-Z]) k="shift-${c,,}" ;;
+			' ') k=spc ;; '-') k=minus ;; '/') k=slash ;; '.') k='dot' ;; '|') k=shift-backslash ;;
+			"'") k=apostrophe ;; '*') k=shift-8 ;; '>') k=shift-dot ;; ',') k=comma ;; '_') k=shift-minus ;;
+			*) continue ;;
+		esac
+		"$LAB" key "$k" >/dev/null 2>&1 || true
+	done
+	"$LAB" key ret >/dev/null 2>&1 || true
+}
+if [ "${BOOT_DIAG:-0}" = 1 ] && [ "$verdict" = INCONCLUSIVO ] && kill -0 "$qemu_pid" 2>/dev/null; then
+	"$LAB" key ctrl-alt-f2 >/dev/null 2>&1 || true
+	sleep 3
+	digitar "clear"
+	digitar "grep -ihE 'error|fail|kiosk|wayland|gui|display' /tmp/anaconda.log /tmp/X.log /tmp/syslog | tail -n 22"
+	sleep 4
+	"$LAB" screenshot "$out/boot-diag-tty2.png" >/dev/null 2>&1 || true
+	tesseract "$out/boot-diag-tty2.png" "$out/boot-diag-tty2" -l eng >/dev/null 2>&1 || true
+	echo "F6-05 DIAG tty2 (OCR): $(tr '\n' ' ' <"$out/boot-diag-tty2.txt" 2>/dev/null | cut -c1-1500)" | tee -a "$out/boot-resultado.txt"
+	digitar "clear"
+	digitar "ps -eo comm,args | grep -iE 'kiosk|anaconda|xwayland|mutter' | cut -c1-150"
+	sleep 3
+	"$LAB" screenshot "$out/boot-diag-ps.png" >/dev/null 2>&1 || true
+	tesseract "$out/boot-diag-ps.png" "$out/boot-diag-ps" -l eng >/dev/null 2>&1 || true
+	echo "F6-05 DIAG processos (OCR): $(tr '\n' ' ' <"$out/boot-diag-ps.txt" 2>/dev/null | cut -c1-1000)" | tee -a "$out/boot-resultado.txt"
+fi
 [ "${verdict%% *}" != FALHA ]

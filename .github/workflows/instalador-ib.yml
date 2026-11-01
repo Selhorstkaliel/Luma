@@ -48,7 +48,7 @@ jobs:
       - name: ISO pelo image-builder e boot com Secure Boot (o Anaconda dela demora mais a abrir)
         run: |
           sudo ISO_FERRAMENTA=$ISO_FERRAMENTA build/iso/build-iso.sh localhost/luma:$FEDORA_VERSION localhost/luma-installer:$FEDORA_VERSION "$OUT" "$LUMA_VERSION"
-          sudo scripts/ci/boot-iso.sh "$OUT/luma-$LUMA_VERSION-x86_64.iso" "$EV/boot" 420
+          sudo BOOT_DIAG=1 scripts/ci/boot-iso.sh "$OUT/luma-$LUMA_VERSION-x86_64.iso" "$EV/boot" 420
           sudo rm -f "$OUT"/*.iso
       - name: Sistema instalado pela ISO do image-builder
         run: |
