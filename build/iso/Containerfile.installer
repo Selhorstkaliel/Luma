@@ -30,6 +30,10 @@ RUN css="$(find /usr -name 'anaconda-gtk*.css' 2>/dev/null | tr '\n' ' ')"; echo
 # iso #33: depois do shim, falta o GRUB de CD (gcdx64.efi, pacote grub2-efi-x64-cdboot)
 # iso #34: depois do EFI, o osbuild falhou com "No module named 'mako'" (modelos do lorax que montam a ISO).
 # [H] Lista de pacotes do instalador para o bootc-installer, conforme a doc do osbuild; os que não existirem são pulados.
+# instalador-ib #1: aos 420 s o Anaconda ainda dizia "Starting installer" e a interface gráfica não abriu. [H] No
+# Fedora 44 ela roda sobre o gnome-kiosk (Wayland), que a base KDE não traz; só no instalador, nunca no sistema.
+RUN dnf -y install --skip-unavailable anaconda-gui gnome-kiosk && dnf clean all \
+    || echo "luma: AVISO: anaconda-gui/gnome-kiosk não instalaram"
 RUN dnf -y install --skip-unavailable grub2-efi-x64-cdboot python3-mako lorax-templates-generic squashfs-tools \
       dracut-config-generic dracut-network net-tools prefixdevname biosdevname && dnf clean all \
     || echo "luma: AVISO: pacotes do instalador para o image-builder não instalaram"
