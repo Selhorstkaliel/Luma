@@ -81,6 +81,9 @@ PY
 	say "vconsole.conf: $(tr '\n' ' ' <"$etc/vconsole.conf" 2>/dev/null || echo '(ausente)')"
 	say "teclado X11: $(grep -h XkbLayout "$etc"/X11/xorg.conf.d/*.conf 2>/dev/null | tr -s ' ' | tr '\n' ' ' || true)"
 	say "usuário: $(grep '^teste:' "$etc/passwd" | cut -d: -f1,3,6 || echo '(ausente)')"
+	# Qual imagem foi instalada e em que alvo o sistema sobe (iso #37, ISO do image-builder: subiu no login de texto)
+	say "alvo padrão: $(readlink "$etc/systemd/system/default.target" 2>/dev/null || echo '(padrão da imagem)')"
+	say "origem: $(grep -h -E '^(container-image-reference|refspec)=' "${etc%/etc}.origin" 2>/dev/null | tr '\n' ' ' || true)"
 done
 umount "$mnt"
 losetup -d "$loop"; loop=""

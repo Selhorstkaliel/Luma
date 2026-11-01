@@ -1,0 +1,66 @@
+# ISO pelo image-builder (tipo bootc-installer) com a marca Luma no Anaconda (F6-05), testada À PARTE da ISO
+# entregue: o iso.yml continua no bootc-image-builder até esta passar. No run iso #37 a ISO do image-builder
+# instalou sozinha com o kickstart do CI, mas o sistema subiu no login de texto, sem sessão gráfica.
+# Nada é publicado: a ISO não vai para artefato; só as capturas e os logs.
+name: instalador-ib
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/instalador-ib.yml
+      - build/iso/**
+      - installer/**
+permissions:
+  contents: read
+concurrency:
+  group: instalador-ib-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  instalador-ib:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 200
+    env:
+      FEDORA_VERSION: "44"
+      LUMA_VERSION: "0.9.0-dev"
+      ISO_FERRAMENTA: image-builder
+      EV: /var/tmp/luma-ib-evidencias
+    steps:
+      - uses: actions/checkout@v4
+      - name: Liberar espaço (armazenamento do podman no mesmo caminho do host, como no iso.yml)
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache /usr/local/share/boost
+          sudo docker image prune -af >/dev/null || true
+          root_free=$(df --output=avail -k / | tail -1); mnt_free=$(df --output=avail -k /mnt | tail -1)
+          sudo mkdir -p /var/lib/containers/storage
+          if [ "$mnt_free" -gt "$root_free" ]; then
+            sudo mkdir -p /mnt/containers /mnt/luma-ib && sudo mount --bind /mnt/containers /var/lib/containers/storage
+            echo "OUT=/mnt/luma-ib" >> "$GITHUB_ENV"
+          else
+            sudo mkdir -p /var/tmp/luma-ib && echo "OUT=/var/tmp/luma-ib" >> "$GITHUB_ENV"
+          fi
+      - name: Ferramentas
+        run: sudo apt-get update -q && sudo apt-get install -y -q qemu-system-x86 qemu-utils ovmf socat tesseract-ocr dnsmasq-base nmap
+      - name: Imagem e instalador do Luma
+        run: |
+          sudo podman build --build-arg FEDORA_VERSION=$FEDORA_VERSION --build-arg LUMA_VERSION=$LUMA_VERSION -t localhost/luma:$FEDORA_VERSION .
+          sudo podman build -f build/iso/Containerfile.installer --build-arg LUMA_IMAGE=localhost/luma:$FEDORA_VERSION -t localhost/luma-installer:$FEDORA_VERSION .
+      - name: ISO pelo image-builder e boot com Secure Boot (o Anaconda dela demora mais a abrir)
+        run: |
+          sudo ISO_FERRAMENTA=$ISO_FERRAMENTA build/iso/build-iso.sh localhost/luma:$FEDORA_VERSION localhost/luma-installer:$FEDORA_VERSION "$OUT" "$LUMA_VERSION"
+          sudo scripts/ci/boot-iso.sh "$OUT/luma-$LUMA_VERSION-x86_64.iso" "$EV/boot" 420
+          sudo rm -f "$OUT"/*.iso
+      - name: Sistema instalado pela ISO do image-builder
+        run: |
+          sudo ISO_FERRAMENTA=$ISO_FERRAMENTA WORK_DIR="$(dirname "$OUT")/luma-ib-vm" scripts/ci/vm-test.sh \
+            localhost/luma:$FEDORA_VERSION localhost/luma-installer:$FEDORA_VERSION "$EV"
+      - name: Preparar evidências
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" "$EV" 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: instalador-ib-${{ github.sha }}
+          path: ${{ env.EV }}/
+          retention-days: 7
+          if-no-files-found: warn

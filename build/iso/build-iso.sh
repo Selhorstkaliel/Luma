@@ -15,7 +15,7 @@ BIB_IMAGE="${BIB_IMAGE:-quay.io/centos-bootc/bootc-image-builder:latest}"   # ar
 mkdir -p "$out"
 out="$(realpath "$out")"
 storage="$(podman info --format '{{.Store.GraphRoot}}')"
-podman pull -q "$IB_IMAGE" >/dev/null
+[ "${ISO_FERRAMENTA:-bib}" = bib ] || podman pull -q "$IB_IMAGE" >/dev/null
 
 # Kickstart do Luma sem nada destrutivo (instalador interativo); o bib lê /config.toml e o image-builder o
 # recebe como blueprint (--blueprint)
@@ -31,21 +31,30 @@ run_tool() {
 }
 [ "$storage" = /var/lib/containers/storage ] || echo "AVISO: armazenamento em $storage; o image-builder espera /var/lib/containers/storage" >&2
 
+# ISO_FERRAMENTA: bib (padrão: só o bootc-image-builder), auto (image-builder com o bib de reserva) ou image-builder (sem reserva).
+# A ISO entregue e os testes usam "bib" até a do image-builder passar no teste do sistema instalado (iso #37: instalou, mas o
+# sistema subiu sem sessão gráfica); o workflow instalador-ib testa a do image-builder à parte.
+ferramenta="${ISO_FERRAMENTA:-bib}"
+case "$ferramenta" in auto|bib|image-builder) ;; *) echo "build-iso.sh: ISO_FERRAMENTA inválida: $ferramenta" >&2; exit 2 ;; esac
 tool="$IB_IMAGE"; type=bootc-installer; dir="$out/ib-bootc-installer"; ib_fail=""
-if ! run_tool "$IB_IMAGE" "$dir" "$out/image-builder-bootc-installer.log" \
+if [ "$ferramenta" = bib ] || ! run_tool "$IB_IMAGE" "$dir" "$out/image-builder-bootc-installer.log" \
 	build --blueprint /config.toml --bootc-ref "$installer" --bootc-installer-payload-ref "$payload" --output-dir /output bootc-installer; then
-	echo "bootc-installer falhou (log em $out/image-builder-bootc-installer.log); tentando anaconda-iso do bootc-image-builder" >&2
-	tail -n 30 "$out/image-builder-bootc-installer.log" >&2
-	# O log completo só vai no artefato: as linhas de erro vão também para o log do job (iso #30: só "exit status 1")
-	echo "--- image-builder: linhas de erro ---" >&2
-	grep -aiE 'error|fail|traceback|no such|stage' "$out/image-builder-bootc-installer.log" | tail -n 60 >&2 || true
-	ib_fail="$(tail -n 3 "$out/image-builder-bootc-installer.log" | tr '\n' ' ' | cut -c1-300)"
+	if [ "$ferramenta" != bib ]; then
+		echo "bootc-installer falhou (log em $out/image-builder-bootc-installer.log)" >&2
+		tail -n 30 "$out/image-builder-bootc-installer.log" >&2
+		# O log completo só vai no artefato: as linhas de erro vão também para o log do job (iso #30: só "exit status 1")
+		echo "--- image-builder: linhas de erro ---" >&2
+		grep -aiE 'error|fail|traceback|no such|stage' "$out/image-builder-bootc-installer.log" | tail -n 60 >&2 || true
+		ib_fail="$(tail -n 3 "$out/image-builder-bootc-installer.log" | tr '\n' ' ' | cut -c1-300)"
+		[ "$ferramenta" = image-builder ] && { echo "build-iso.sh: ISO_FERRAMENTA=image-builder, sem reserva" >&2; exit 1; }
+		echo "tentando anaconda-iso do bootc-image-builder" >&2
+	fi
 	podman pull -q "$BIB_IMAGE" >/dev/null || { echo "build-iso.sh: $BIB_IMAGE indisponível" >&2; exit 1; }
 	tool="$BIB_IMAGE"; type=anaconda-iso; dir="$out/bib-anaconda-iso"
 	if ! run_tool "$BIB_IMAGE" "$dir" "$out/bootc-image-builder-anaconda-iso.log" \
 		--type anaconda-iso --rootfs btrfs --output /output "$payload"; then
 		tail -n 30 "$out/bootc-image-builder-anaconda-iso.log" >&2
-		echo "build-iso.sh: as duas ferramentas falharam" >&2
+		echo "build-iso.sh: o bootc-image-builder falhou" >&2
 		exit 1
 	fi
 fi
