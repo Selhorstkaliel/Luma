@@ -153,6 +153,13 @@ jobs:
           set -euo pipefail
           sudo podman image exists localhost/luma:$FEDORA_VERSION
           tag="$FEDORA_VERSION-${GITHUB_SHA::7}"
+          # Antes de publicar: a senha abre a chave privada e ela corresponde à chave pública do repositório
+          cosign public-key --key env://COSIGN_PRIVATE_KEY >"$RUNNER_TEMP/segredo.pub" \
+            || { echo "::error::COSIGN_PRIVATE_KEY/COSIGN_PASSWORD não abrem a chave; nada publicado"; exit 1; }
+          a="$(openssl pkey -pubin -in "$RUNNER_TEMP/segredo.pub" -outform DER | sha256sum | cut -c1-64)"
+          b="$(openssl pkey -pubin -in configs/etc/pki/containers/luma-cosign.pub -outform DER | sha256sum | cut -c1-64)"
+          [ "$a" = "$b" ] || { echo "::error::a chave do segredo ($a) não é a do repositório ($b); nada publicado"; exit 1; }
+          echo "chave do segredo confere com configs/etc/pki/containers/luma-cosign.pub (sha256 DER $b)"
           echo "$TOKEN" | sudo podman login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
           sudo podman push --digestfile "$RUNNER_TEMP/digest" localhost/luma:$FEDORA_VERSION "docker://$IMAGEM_GHCR:$tag"
           sudo podman push localhost/luma:$FEDORA_VERSION "docker://$IMAGEM_GHCR:$FEDORA_VERSION"
