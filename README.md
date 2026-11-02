@@ -2,7 +2,7 @@
 
 Distribuição Linux baseada na **Fedora Kinoite** (Fedora 44, KDE Plasma 6, Wayland), entregue como imagem **bootc**, com identidade visual própria "Midnight", foco em jogos e apps próprios em Qt/QML.
 
-> **Estado: Fase 0 (bootstrap).** Ainda não há ISO nem sistema instalável. Nada aqui foi testado em hardware real. Veja [docs/STATUS.md](docs/STATUS.md).
+> **Estado: pré-alpha.** A imagem é publicada assinada (cosign) em `ghcr.io/selhorstkaliel/luma:44` depois de passar em todos os testes do CI. A ISO existe só como artefato do CI, por 7 dias, e **só para VM com disco virtual vazio**. Nada foi testado em hardware real. Veja [docs/STATUS.md](docs/STATUS.md).
 
 ## Documentos
 - [Plano mestre](docs/PLANO-MESTRE.md): arquitetura, fases, riscos e critérios de aceite.
@@ -17,7 +17,7 @@ Distribuição Linux baseada na **Fedora Kinoite** (Fedora 44, KDE Plasma 6, Way
 | `apps/` | Apps próprios (`settings/` = Ajustes) |
 | `gaming/` | Camada de jogos e Windows (`wine/`) |
 | `scripts/lab/` | Laboratório QEMU/KVM + OVMF com Secure Boot |
-| `scripts/ci/`, `.github/workflows/` | Lint, testes e build no CI (sem publicação) |
+| `scripts/ci/`, `.github/workflows/` | Lint, testes, ISO, testes em VM e publicação assinada no GHCR |
 | `tests/` | `unit/` (sem Qt), `image/` (dentro do container) |
 | `packages/`, `branding/`, `qml/`, `security/`, `installer/`, `lume-sdk/` | Reservadas para as próximas fases (ver o README de cada uma) |
 
@@ -27,6 +27,11 @@ scripts/ci/lint.sh && scripts/ci/unit.sh                          # verificaçõ
 podman build --build-arg FEDORA_VERSION=44 -t localhost/luma:44 .  # imagem
 podman run --rm -v "$PWD/tests/image:/t:ro" localhost/luma:44 /t/test-image.sh
 ```
+Num sistema Luma já instalado (VM), apontar para o canal assinado:
+```sh
+sudo bootc switch ghcr.io/selhorstkaliel/luma:44 && sudo systemctl reboot
+```
+A imagem só aceita atualizações desse repositório assinadas pela chave `configs/etc/pki/containers/luma-cosign.pub` ([decisão 0009](docs/decisions/0009-build-ci-assinatura.md)).
 
 ## Origem e licenças
 Começou como `Selhorstkaliel/LUMA-OS` (Luma 0.8.0, base Debian). Os ativos agnósticos vieram do commit 44903f2. As licenças por arquivo estão em [LICENSES.toml](LICENSES.toml): o código é GPL-2.0-or-later, e wallpapers e documentação são CC-BY-SA-4.0.
