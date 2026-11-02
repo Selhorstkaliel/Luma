@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-or-later
+# luma-drivers: hardware detectado, drivers em uso e o que falta; nada é instalado sem confirmação (decisão 0014)
+export PYTHONPATH="/usr/share/luma-drivers${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m luma_drivers "$@"

@@ -121,6 +121,12 @@ welcome_autostart() {
 	[ -z "$so" ] || { echo "módulo KDED do plasma-welcome presente: $so" >&2; return 1; }
 }
 check F3-I06 "Boas-vindas do Luma no autostart, a do KDE desligada" welcome_autostart
+# Assistente de drivers (decisão 0014): roda sem root e gera JSON; as ferramentas de base existem
+# shellcheck disable=SC2317,SC2329
+drivers_json() { HOME=/tmp USER=teste luma-drivers --json | python3 -c 'import json,sys; d=json.load(sys.stdin); assert isinstance(d, list)'; }
+check F3-I07 "Drivers: luma-drivers --json roda e devolve uma lista" drivers_json
+check F3-I08 "Drivers: CUPS, fwupd e fprintd na imagem" bash -c 'command -v lpstat && command -v fwupdmgr && command -v fprintd-list'
+echo "INFO F3-I08 opcionais: $(for c in ipp-usb airscan-discover sane-find-scanner switcherooctl ratbagctl solaar; do printf '%s=%s ' "$c" "$(command -v "$c" >/dev/null && echo sim || echo nao)"; done)"
 # shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
 ptbr_defaults() {
 	grep -qx 'LANG=pt_BR.UTF-8' /etc/locale.conf && grep -qx 'KEYMAP=br-abnt2' /etc/vconsole.conf \

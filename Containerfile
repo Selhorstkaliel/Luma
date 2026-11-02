@@ -33,6 +33,9 @@ COPY apps/settings/data/luma-ajustes.1 /usr/share/man/man1/luma-ajustes.1
 COPY apps/settings/data/luma-boas-vindas /usr/bin/luma-boas-vindas
 COPY apps/settings/data/org.luma.boas-vindas.desktop /usr/share/applications/org.luma.boas-vindas.desktop
 COPY apps/settings/data/org.luma.boas-vindas-autostart.desktop /etc/xdg/autostart/org.luma.boas-vindas.desktop
+# Assistente de drivers (decisão 0014): detecta o hardware e oferece ações, só com confirmação do usuário
+COPY apps/drivers/luma_drivers/ /usr/share/luma-drivers/luma_drivers/
+COPY apps/drivers/data/luma-drivers /usr/bin/luma-drivers
 # Jogos (Fase 4): lojas via Flathub sob demanda, sem RPM Fusion na imagem (decisão 0012)
 COPY gaming/bin/luma-jogos /usr/bin/luma-jogos
 COPY gaming/data/org.luma.jogos.desktop /usr/share/applications/org.luma.jogos.desktop

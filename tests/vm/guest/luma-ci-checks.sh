@@ -177,6 +177,13 @@ b2="$(kread kwinrc Plugins blurEnabled)"
 ok=FALHOU; [ "$rc1$rc2" = 00 ] && [ "$b$c$a" = falsefalse0 ] && [ -z "$b2" ] && ok=PASSOU
 res F2-04 "$ok" "ligado: blur=$b contraste=$c animacao=$a; desligado: blur=${b2:-removido} (rc $rc1/$rc2)"
 
+# --- Assistente de drivers (F3-05, decisão 0014): no sistema instalado, com o usuário, sem root -----------
+drv="$(asuser luma-drivers --json 2>/var/luma-ci/drivers.err)"; rcd=$?
+dump DRIVERS asuser luma-drivers
+okd=FALHOU
+python3 -c 'import json,sys; d=json.loads(sys.argv[1]); assert any(i["categoria"]=="video" for i in d)' "$drv" 2>/dev/null && [ "$rcd" = 0 ] && okd=PASSOU
+res F3-05 "$okd" "luma-drivers --json rc=$rcd itens=$(grep -c '"id"' <<<"$drv") video=$(grep -o '"dispositivo": "Placa de vídeo[^"]*"' <<<"$drv" | head -n1) erro=$(head -c 200 /var/luma-ci/drivers.err | tr '\n' ' ')"
+
 # --- Lume (F7-01) -----------------------------------------------------------------------------------------
 lumedir="$home/lume-ci"
 asuser mkdir -p "$lumedir"
