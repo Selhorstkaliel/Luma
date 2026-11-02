@@ -69,5 +69,16 @@ class TestCompara(unittest.TestCase):
         self.assertIn("F5-03 PASSOU", texto)   # o AVC não muda o veredito do F5-03
 
 
+    def test_comparacao_com_outro_sistema_e_so_informativa(self):
+        w = medicao([2600] * 3, [30] * 3, {"explorer": 120000})
+        lu = medicao([1350] * 3, [8] * 3, {"plasmashell": 300000})
+        ok, linhas = mc.comparar_outro("Windows 11", w, lu)
+        texto = "\n".join(linhas)
+        self.assertTrue(ok)
+        self.assertIn("Windows 11 2600.0 | Luma 1350.0", texto)
+        self.assertIn("COMPARACAO INFO", texto)
+        self.assertNotIn("F5-03", texto)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
