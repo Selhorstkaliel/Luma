@@ -155,7 +155,7 @@ jobs:
           tag="$FEDORA_VERSION-${GITHUB_SHA::7}"
           # Antes de publicar: a senha abre a chave privada e ela corresponde à chave pública do repositório
           cosign public-key --key env://COSIGN_PRIVATE_KEY >"$RUNNER_TEMP/segredo.pub" \
-            || { echo "::error::COSIGN_PRIVATE_KEY/COSIGN_PASSWORD não abrem a chave; nada publicado"; exit 1; }
+            || { echo "::error::COSIGN_PRIVATE_KEY/COSIGN_PASSWORD não abrem a chave; nada publicado. O segredo precisa do arquivo cosign.key inteiro, com as linhas BEGIN e END (gh secret set COSIGN_PRIVATE_KEY -R Selhorstkaliel/Luma < cosign.key)"; exit 1; }
           a="$(openssl pkey -pubin -in "$RUNNER_TEMP/segredo.pub" -outform DER | sha256sum | cut -c1-64)"
           b="$(openssl pkey -pubin -in configs/etc/pki/containers/luma-cosign.pub -outform DER | sha256sum | cut -c1-64)"
           [ "$a" = "$b" ] || { echo "::error::a chave do segredo ($a) não é a do repositório ($b); nada publicado"; exit 1; }

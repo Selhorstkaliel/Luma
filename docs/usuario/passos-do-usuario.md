@@ -29,10 +29,13 @@ Ordem recomendada: **A → B → C → D**. Depois de cada passo, me mande o que
    - Ele pede uma **senha**: escolha uma forte e anote.
    - Saem 2 arquivos: `cosign.key` (**secreto**) e `cosign.pub` (público).
 2. Faça backup do `cosign.key` e da senha, por exemplo num pendrive ou num gerenciador de senhas. Se perder, é preciso gerar outro par e publicar a chave nova.
-3. No GitHub, crie os dois segredos:
-   1. Abra **github.com/Selhorstkaliel/Luma** > **Settings** > **Secrets and variables** > **Actions** > **New repository secret**.
-   2. Crie `COSIGN_PRIVATE_KEY`. No valor, cole o arquivo inteiro: `cat ~/luma-chave/cosign.key`, copiando da linha `-----BEGIN` até a linha `-----END`.
-   3. Crie `COSIGN_PASSWORD`, com a senha do passo 1.
+3. Grave os dois segredos no GitHub **direto do arquivo**, sem copiar e colar (iso #43: a chave colada à mão chegou sem o formato PEM e o CI recusou, com "invalid pem block"):
+   ```bash
+   sudo dnf install -y gh
+   gh auth login                                                   # GitHub.com > HTTPS > login pelo navegador
+   gh secret set COSIGN_PRIVATE_KEY -R Selhorstkaliel/Luma < ~/luma-chave/cosign.key
+   gh secret set COSIGN_PASSWORD -R Selhorstkaliel/Luma            # pede a senha sem mostrar
+   ```
 4. **Nunca** mande o `cosign.key` nem a senha no chat, por e-mail ou em commit.
 
 **O que me mandar:** o conteúdo de `cat ~/luma-chave/cosign.pub` (é público) e a frase "segredos criados".
