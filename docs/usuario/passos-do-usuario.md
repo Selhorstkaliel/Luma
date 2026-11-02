@@ -100,6 +100,12 @@ Ordem recomendada: **A → B → C → D**. Depois de cada passo, me mande o que
      A janela da VM abre sozinha. Se não abrir, use `virt-viewer luma-teste`.
      O `enrolled-keys` é obrigatório: sem as chaves da Microsoft inscritas, o Secure Boot recusa o carregador da ISO e a VM cai no menu "Please select boot device" do firmware.
      Se o nome `luma-teste` já existir: `sudo virsh destroy luma-teste; sudo virsh undefine luma-teste --nvram --remove-all-storage`.
+     **VM sem internet com Docker no computador** (2026-11-02: `ping 1.1.1.1` sem resposta na VM): o Docker bloqueia o encaminhamento das VMs. Libere só a rede do libvirt (vale até reiniciar o computador):
+     ```bash
+     sudo iptables -I DOCKER-USER -i virbr0 -j ACCEPT
+     sudo iptables -I DOCKER-USER -o virbr0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+     ```
+     Não use `virsh net-destroy` com a VM ligada: a placa de rede dela fica desconectada até desligar e ligar a VM (`sudo virsh shutdown luma-teste`, depois `sudo virsh start luma-teste`).
    - **Com o laboratório do repositório** (o `lab.sh` só existe dentro do clone):
      ```bash
      git clone https://github.com/Selhorstkaliel/Luma && cd Luma
