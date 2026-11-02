@@ -73,13 +73,17 @@ digitar() {
 if [ "${BOOT_DIAG:-0}" = 1 ] && [ "$verdict" = INCONCLUSIVO ] && kill -0 "$qemu_pid" 2>/dev/null; then
 	"$LAB" key ctrl-alt-f2 >/dev/null 2>&1 || true
 	sleep 3
-	digitar "clear"
 	digitar "grep -ihE 'error|fail|kiosk|wayland|gui|display' /tmp/anaconda.log /tmp/X.log /tmp/syslog | tail -n 22"
 	sleep 4
 	"$LAB" screenshot "$out/boot-diag-tty2.png" >/dev/null 2>&1 || true
 	tesseract "$out/boot-diag-tty2.png" "$out/boot-diag-tty2" -l eng >/dev/null 2>&1 || true
 	echo "F6-05 DIAG tty2 (OCR): $(tr '\n' ' ' <"$out/boot-diag-tty2.txt" 2>/dev/null | cut -c1-1500)" | tee -a "$out/boot-resultado.txt"
-	digitar "clear"
+	digitar "cat /proc/cmdline"
+	digitar "grep -ihE 'display mode|spoke' /tmp/anaconda.log | tail -n 8"
+	sleep 3
+	"$LAB" screenshot "$out/boot-diag-modo.png" >/dev/null 2>&1 || true
+	tesseract "$out/boot-diag-modo.png" "$out/boot-diag-modo" -l eng >/dev/null 2>&1 || true
+	echo "F6-05 DIAG modo e telas (OCR): $(tr '\n' ' ' <"$out/boot-diag-modo.txt" 2>/dev/null | cut -c1-1500)" | tee -a "$out/boot-resultado.txt"
 	digitar "ps -eo comm,args | grep -iE 'kiosk|anaconda|xwayland|mutter' | cut -c1-150"
 	sleep 3
 	"$LAB" screenshot "$out/boot-diag-ps.png" >/dev/null 2>&1 || true

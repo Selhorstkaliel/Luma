@@ -6,6 +6,7 @@
 # tests/unit/test_installer.py barra comandos destrutivos aqui.
 # xconfig --startxonboot: o sistema instalado sobe na sessão gráfica (instalador-ib #1: a ISO do image-builder
 # deixava o alvo padrão em multi-user.target e o sistema parava no login de texto).
+# graphical: instalador na interface gráfica (instalador-ib #3: o Anaconda da ISO do image-builder escolheu o modo texto).
 [customizations.installer.kickstart]
 contents = """
 lang pt_BR.UTF-8
@@ -13,4 +14,5 @@ keyboard br
 timezone America/Sao_Paulo
 network --bootproto=dhcp --hostname=luma
 xconfig --startxonboot
+graphical
 """
