@@ -124,6 +124,8 @@ Ordem recomendada: **A → B → C → D**. Depois de cada passo, me mande o que
 
 ## D. Hardware de teste (jogos, bateria, Windows real, Fase 8)
 
+> **Resposta do usuário (2026-11-02): não há hardware de teste.** Jogos (F4-02), bateria (F5-04), dual boot com Windows real e a Fase 8 ficam bloqueados, e o Luma continua pré-alpha só para VM. Caminho futuro de menor risco: um SSD ou pendrive USB de 64 GB ou mais, só para o Luma (o notebook dá boot por ele sem tocar no disco interno).
+
 **Por quê:** a VM do CI não tem placa de vídeo 3D nem bateria. Jogos com FPS, consumo de energia e dual boot com um Windows de verdade só podem ser testados numa máquina física.
 
 **Serve:**
