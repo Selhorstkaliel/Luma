@@ -47,7 +47,7 @@ Ordem recomendada: **A → B → C → D**. Depois de cada passo, me mande o que
 
 ---
 
-## B. Revisão visual (aprovar o visual da Fase 2)
+## B. Revisão visual (aprovar o visual da Fase 2): FEITO em 2026-11-02 ("aprovo", na VM instalada)
 
 **Por quê:** o CI confere configurações (tema, painéis, cores), mas só você pode dizer se a aparência está boa.
 
