@@ -79,12 +79,23 @@ Ordem recomendada: **A → B → C → D**. Depois de cada passo, me mande o que
    gh run download <ID> -R Selhorstkaliel/Luma -p '*iso-pre-alpha' -D ~/luma-iso
    cd ~/luma-iso/*iso-pre-alpha && sha256sum -c *.sha256    # tem de dizer "OK"
    ```
-2. Crie a VM com Secure Boot pelo laboratório do repositório:
-   ```bash
-   git clone https://github.com/Selhorstkaliel/Luma && cd Luma
-   git checkout claude/eager-franklin-mb8qmf
-   BOOT_ISO="$(ls ~/luma-iso/*iso-pre-alpha/luma-*.iso)" VM_GUI=1 scripts/lab/lab.sh install
-   ```
+2. Crie a VM com Secure Boot. Escolha **uma** das opções:
+   - **Sem baixar o repositório** (mais simples; usa o virt-manager/libvirt):
+     ```bash
+     sudo dnf install -y virt-install virt-viewer edk2-ovmf
+     sudo cp "$(ls ~/luma-iso/*iso-pre-alpha/luma-*.iso)" /var/lib/libvirt/images/luma.iso
+     sudo virt-install --name luma-teste --memory 6144 --vcpus 4 \
+       --osinfo fedora-unknown --machine q35 \
+       --boot uefi,loader_secure=yes --features smm.state=on \
+       --disk size=64 --cdrom /var/lib/libvirt/images/luma.iso
+     ```
+     A janela da VM abre sozinha. Se não abrir, use `virt-viewer luma-teste`.
+   - **Com o laboratório do repositório** (o `lab.sh` só existe dentro do clone):
+     ```bash
+     git clone https://github.com/Selhorstkaliel/Luma && cd Luma
+     git checkout claude/eager-franklin-mb8qmf
+     BOOT_ISO="$(ls ~/luma-iso/*iso-pre-alpha/luma-*.iso)" VM_GUI=1 scripts/lab/lab.sh install
+     ```
 3. No instalador:
    1. escolha o disco **virtual**;
    2. crie seu usuário;
