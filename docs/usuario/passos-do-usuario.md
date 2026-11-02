@@ -86,10 +86,13 @@ Ordem recomendada: **A → B → C → D**. Depois de cada passo, me mande o que
      sudo cp "$(ls ~/luma-iso/*iso-pre-alpha/luma-*.iso)" /var/lib/libvirt/images/luma.iso
      sudo virt-install --name luma-teste --memory 6144 --vcpus 4 \
        --osinfo fedora-unknown --machine q35 \
-       --boot uefi,loader_secure=yes --features smm.state=on \
+       --boot uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=yes,firmware.feature1.name=enrolled-keys,firmware.feature1.enabled=yes \
+       --features smm.state=on \
        --disk size=64 --cdrom /var/lib/libvirt/images/luma.iso
      ```
      A janela da VM abre sozinha. Se não abrir, use `virt-viewer luma-teste`.
+     O `enrolled-keys` é obrigatório: sem as chaves da Microsoft inscritas, o Secure Boot recusa o carregador da ISO e a VM cai no menu "Please select boot device" do firmware.
+     Se o nome `luma-teste` já existir: `sudo virsh destroy luma-teste; sudo virsh undefine luma-teste --nvram --remove-all-storage`.
    - **Com o laboratório do repositório** (o `lab.sh` só existe dentro do clone):
      ```bash
      git clone https://github.com/Selhorstkaliel/Luma && cd Luma

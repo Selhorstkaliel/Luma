@@ -26,7 +26,7 @@ tela() {
 	command -v tesseract >/dev/null && log "tela $1 (OCR): $(tesseract "$work/tela.png" - -l eng 2>/dev/null | tr '\n' ' ' | cut -c1-300)"
 	return 0
 }
-limpa() { pkill -f "swtpm socket --tpmstate dir=$tpm_dir" 2>/dev/null || true; [ -n "${qpid:-}" ] && kill "$qpid" 2>/dev/null; true; }
+limpa() { pkill -f "swtpm socket.*--tpmstate dir=$tpm_dir" 2>/dev/null || true; [ -n "${qpid:-}" ] && kill "$qpid" 2>/dev/null; true; }
 trap limpa EXIT
 
 # 1. ISO oficial da Microsoft (Evaluation Center); o sha256 vai para o log como registro
@@ -46,8 +46,17 @@ xorriso -as mkisofs -quiet -J -r -V RESPOSTAS -o "$work/respostas.iso" "$work/re
 rm -f "$work/disco.qcow2"; qemu-img create -q -f qcow2 "$work/disco.qcow2" 64G
 cp /usr/share/OVMF/OVMF_VARS_4M.ms.fd "$work/vars.fd"
 rm -rf "$tpm_dir"; mkdir -p "$tpm_dir"
-swtpm socket --tpmstate "dir=$tpm_dir" --ctrl "type=unixio,path=$tpm_dir/sock" --tpm2 --daemon
+# windows #1: "swtpm: Could not open UnixIO socket: Permission denied". [H] O perfil AppArmor do swtpm no Ubuntu só
+# permite sockets nos caminhos do libvirt; no runner descartável ele roda sem esse perfil (aa-exec, se existir).
+if [ -e /etc/apparmor.d/usr.bin.swtpm ] && command -v apparmor_parser >/dev/null; then
+	apparmor_parser -R /etc/apparmor.d/usr.bin.swtpm 2>/dev/null && log "perfil AppArmor do swtpm descarregado (só neste runner)"
+fi
+aa=(); command -v aa-exec >/dev/null && aa=(aa-exec -p unconfined --)
+"${aa[@]}" swtpm socket --tpmstate "dir=$tpm_dir" --ctrl "type=unixio,path=$tpm_dir/sock" --tpm2 --daemon \
+	--log "file=$work/swtpm.log,level=5"
 for _ in 1 2 3 4 5; do [ -S "$tpm_dir/sock" ] && break; sleep 1; done
+[ -S "$tpm_dir/sock" ] || { log "swtpm não criou o socket: $(tail -n 5 "$work/swtpm.log" 2>/dev/null | tr '\n' ' ')"; exit 1; }
+log "TPM 2.0 virtual pronto${aa:+ (sem perfil AppArmor)}"
 : >"$serial"
 
 qemu-system-x86_64 -machine q35,accel=kvm,smm=on -cpu host -smp 4 -m 6144 \
