@@ -59,7 +59,7 @@ for _ in 1 2 3 4 5; do [ -S "$tpm_dir/sock" ] && break; sleep 1; done
 log "TPM 2.0 virtual pronto${aa:+ (sem perfil AppArmor)}"
 : >"$serial"
 
-qemu-system-x86_64 -machine q35,accel=kvm,smm=on -cpu host -smp 4 -m 6144 \
+qemu-system-x86_64 -machine q35,accel=kvm,smm=on -cpu host,hv_relaxed,hv_vapic,hv_spinlocks=0x1fff,hv_time,hv_vpindex,hv_synic,hv_stimer,hv_frequencies -smp 4 -m 6144 \
 	-global driver=cfi.pflash01,property=secure,value=on \
 	-drive if=pflash,format=raw,unit=0,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.secboot.fd \
 	-drive if=pflash,format=raw,unit=1,file="$work/vars.fd" \
@@ -75,10 +75,19 @@ log "VM iniciada (instalação + 3 boots de medição)"
 for _ in $(seq 1 30); do sleep 1; qmp '{"execute":"send-key","arguments":{"keys":[{"type":"qcode","data":"ret"}]}}'; done
 
 # 4. Espera o fim (o medir.ps1 desliga a VM no 3º boot); tela a cada 10 min
-t=0; limite=$((150 * 60))
+t=0; iguais=0; limite=$((150 * 60))
 while kill -0 "$qpid" 2>/dev/null; do
 	sleep 10; t=$((t + 10))
-	if [ $((t % 600)) = 0 ]; then tela "${t}s"; log "linhas no serial: $(grep -ac '^LUMACI' "$serial" || true)"; fi
+	if [ $((t % 600)) = 0 ]; then
+		tela "${t}s"; log "linhas no serial: $(grep -ac '^LUMACI' "$serial" || true)"
+		# windows #2: travou em "45% complete" por 2,5 h. Tela idêntica por 40 min = travado; encerra cedo
+		if [ -s "$work/tela.png" ]; then
+			h="$(sha256sum "$work/tela.png" | cut -c1-64)"
+			if [ "$h" = "${h_ant:-}" ]; then iguais=$((iguais + 1)); else iguais=0; fi
+			h_ant="$h"
+			[ "$iguais" -ge 4 ] && { log "tela idêntica há $((iguais * 10)) min: instalação travada"; break; }
+		fi
+	fi
 	[ "$t" -ge "$limite" ] && { log "prazo de ${limite}s esgotado"; tela prazo; break; }
 done
 tr -d '\r' <"$serial" | grep -a '^LUMACI ' | sed 's/^LUMACI //' >"$ev/medicao-windows.txt" || true

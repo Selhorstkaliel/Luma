@@ -154,6 +154,12 @@ jobs:
           sudo podman image exists localhost/luma:$FEDORA_VERSION
           tag="$FEDORA_VERSION-${GITHUB_SHA::7}"
           # Antes de publicar: a senha abre a chave privada e ela corresponde à chave pública do repositório
+          # Diagnóstico só com números (iso #43/#44: "invalid pem block"): nada do conteúdo do segredo vai para o log
+          printf '%s' "$COSIGN_PRIVATE_KEY" >"$RUNNER_TEMP/k"
+          echo "segredo: $(wc -c <"$RUNNER_TEMP/k") bytes, $(wc -l <"$RUNNER_TEMP/k") quebras de linha," \
+            "BEGIN=$(grep -c -- '-----BEGIN' "$RUNNER_TEMP/k" || true) END=$(grep -c -- '-----END' "$RUNNER_TEMP/k" || true)" \
+            "CR=$(tr -cd '\r' <"$RUNNER_TEMP/k" | wc -c) senha=$(printf '%s' "$COSIGN_PASSWORD" | wc -c) bytes"
+          rm -f "$RUNNER_TEMP/k"
           cosign public-key --key env://COSIGN_PRIVATE_KEY >"$RUNNER_TEMP/segredo.pub" \
             || { echo "::error::COSIGN_PRIVATE_KEY/COSIGN_PASSWORD não abrem a chave; nada publicado. O segredo precisa do arquivo cosign.key inteiro, com as linhas BEGIN e END (gh secret set COSIGN_PRIVATE_KEY -R Selhorstkaliel/Luma < cosign.key)"; exit 1; }
           a="$(openssl pkey -pubin -in "$RUNNER_TEMP/segredo.pub" -outform DER | sha256sum | cut -c1-64)"
