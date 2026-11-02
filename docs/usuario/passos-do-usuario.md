@@ -16,11 +16,15 @@ Ordem recomendada: **A → B → C → D**. Depois de cada passo, me mande o que
 
 **Por quê:** o CI só publica a imagem do Luma no GitHub (`ghcr.io/selhorstkaliel/luma`) se ela estiver assinada com a chave do projeto. Sem a chave, nada é publicado, e não há atualização (`bootc upgrade`) nem volta de versão para testar.
 
-1. Instale o cosign e crie a chave **numa pasta fora do repositório**:
+1. Instale o cosign e crie a chave **no seu computador** (não na VM do Luma) e **numa pasta fora do repositório**. O Fedora não tem o pacote `cosign` (`dnf`: "Nenhuma correspondência", 2026-11-02); use o binário oficial na versão do CI, conferido pelo checksum publicado. Cole uma linha por vez:
    ```bash
-   sudo dnf install -y cosign
+   mkdir -p ~/.local/bin ~/cosign-baixar && cd ~/cosign-baixar
+   curl -fLO https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64
+   curl -fLO https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign_checksums.txt
+   grep ' cosign-linux-amd64$' cosign_checksums.txt | sha256sum -c    # tem de dizer "OK"; se não, pare
+   install -m 0755 cosign-linux-amd64 ~/.local/bin/cosign
    mkdir -p ~/luma-chave && cd ~/luma-chave
-   cosign generate-key-pair
+   ~/.local/bin/cosign generate-key-pair
    ```
    - Ele pede uma **senha**: escolha uma forte e anote.
    - Saem 2 arquivos: `cosign.key` (**secreto**) e `cosign.pub` (público).
