@@ -101,8 +101,14 @@ def usb_devices(root: Path) -> list[dict]:
     return out
 
 
+# O joydev cria js* também para tablets e outros dispositivos de eixo absoluto (VM do usuário, 2026-11-03:
+# "QEMU QEMU USB Tablet" e "spice vdagent tablet" apareciam como controles de jogo)
+NAO_CONTROLE = re.compile(r"tablet|touchpad|trackpad|mouse|\bpen\b|stylus|digitizer|accelerometer|vdagent|wacom", re.I)
+
+
 def joysticks(root: Path) -> list[str]:
-    return [_read(js / "device/name") or js.name for js in sorted((root / "sys/class/input").glob("js*"))]
+    nomes = [_read(js / "device/name") or js.name for js in sorted((root / "sys/class/input").glob("js*"))]
+    return [n for n in nomes if not NAO_CONTROLE.search(n)]
 
 
 def _usb_label(u: dict) -> str:

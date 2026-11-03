@@ -51,7 +51,8 @@ class FakeSys:
             self._link_driver(i, driver)
 
     def js(self, nome):
-        d = self.root / "sys/class/input/js0/device"
+        n = len(list((self.root / "sys/class/input").glob("js*")))
+        d = self.root / f"sys/class/input/js{n}/device"
         d.mkdir(parents=True)
         (d / "name").write_text(nome + "\n")
 
@@ -151,6 +152,12 @@ class Controles(unittest.TestCase):
         self.assertNotIn("controle-1-4", items)
         self.assertTrue(any("DualSense" in i.dispositivo for i in items.values()))
         self.assertEqual(items["controles-steam"].acao.comandos, [["luma-jogos", "instalar", "steam"]])
+
+    def test_tablet_da_vm_nao_e_controle(self):
+        fs = FakeSys()
+        fs.js("QEMU QEMU USB Tablet")
+        fs.js("spice vdagent tablet")
+        self.assertFalse([i for i in detect(fs, comandos={"steam-devices"}) if i.categoria == "controles"])
 
     def test_sem_controle_sem_item(self):
         self.assertFalse([i for i in detect(FakeSys()) if i.categoria == "controles"])
