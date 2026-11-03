@@ -54,6 +54,14 @@ jobs:
         run: |
           sudo ISO_FERRAMENTA=$ISO_FERRAMENTA WORK_DIR="$(dirname "$OUT")/luma-ib-vm" scripts/ci/vm-test.sh \
             localhost/luma:$FEDORA_VERSION localhost/luma-installer:$FEDORA_VERSION "$EV"
+      # Etapa C (F6-05): o resumo do smoke e do sistema instalado no FIM do log, para ser lido sem baixar o log inteiro
+      - name: Resumo para leitura (F6-05)
+        if: always()
+        run: |
+          echo "=== smoke de boot (veredito, cor da barra lateral, modo e telas) ==="
+          sudo cat "$EV/boot/boot-resultado.txt" 2>/dev/null | cut -c1-1600 || echo "sem boot-resultado.txt"
+          echo "=== sistema instalado ==="
+          sudo cat "$EV/resultado.txt" 2>/dev/null | cut -c1-300 || echo "sem resultado.txt"
       - name: Preparar evidências
         if: always()
         run: sudo chown -R "$(id -u):$(id -g)" "$EV" 2>/dev/null || true
