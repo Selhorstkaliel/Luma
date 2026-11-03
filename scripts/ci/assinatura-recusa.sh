@@ -13,6 +13,10 @@ CANAL=ghcr.io/selhorstkaliel/luma
 REG=localhost:5000
 tmp="$(mktemp -d /var/tmp/luma-recusa.XXXXXX)"
 log() { printf '[F6-07] %s\n' "$*" >&2; }
+# iso #48: rodado com sudo, o PATH perdia o cosign do cosign-installer e o script saía com 127 sem mensagem
+for c in podman cosign curl; do
+	command -v "$c" >/dev/null || { log "FALHOU: falta o comando $c (PATH=$PATH)"; exit 1; }
+done
 # Chamada pelo trap (SC2317/SC2329 no ShellCheck)
 # shellcheck disable=SC2317,SC2329
 limpa() { podman rm -f luma-reg >/dev/null 2>&1 || true; rm -rf "$tmp"; }
@@ -32,9 +36,9 @@ podman push -q --tls-verify=false "$REG/luma:teste-sem-assinatura"
 podman push -q --tls-verify=false "$REG/luma:teste-chave-errada"
 
 # Chave descartável, gerada aqui e apagada no fim; nunca a chave do projeto. Sem envio ao Rekor público.
-(cd "$tmp" && COSIGN_PASSWORD=teste-f6-07 cosign generate-key-pair >/dev/null 2>&1)
+(cd "$tmp" && COSIGN_PASSWORD=teste-f6-07 cosign generate-key-pair >/dev/null)
 COSIGN_PASSWORD=teste-f6-07 cosign sign --yes --key "$tmp/cosign.key" --tlog-upload=false --allow-insecure-registry \
-	"$REG/luma:teste-chave-errada" >/dev/null 2>&1
+	"$REG/luma:teste-chave-errada" >/dev/null
 log "imagens de teste no registro local: teste-sem-assinatura (nenhuma assinatura), teste-chave-errada (chave descartável)"
 
 # 3. Mirror do canal e anexos sigstore também no mirror

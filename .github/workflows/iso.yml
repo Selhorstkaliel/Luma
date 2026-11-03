@@ -186,4 +186,4 @@ jobs:
       # assinatura vai para o GHCR). Sem os segredos do cosign neste passo.
       - name: Recusa de imagem sem assinatura (F6-07)
         if: steps.pub.outputs.publicar == 'sim'
-        run: sudo scripts/ci/assinatura-recusa.sh localhost/luma:$FEDORA_VERSION
+        run: sudo env "PATH=$PATH" scripts/ci/assinatura-recusa.sh localhost/luma:$FEDORA_VERSION
