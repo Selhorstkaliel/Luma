@@ -31,6 +31,22 @@ A edição Fedora nasceu neste repositório a partir de `Selhorstkaliel/LUMA-OS@
 6. Nome e logotipo definitivos (0010).
 7. Arquivar o LUMA-OS. O `STATUS.md` dele diz "repositório privado", mas o repositório está público [F].
 
+## Roteiro do que falta (aprovado pelo usuário em 2026-11-03)
+Uma etapa por vez; cada uma só fecha com evidência em [TESTS.md](TESTS.md).
+
+| Etapa | Conteúdo | Fecha quando |
+|---|---|---|
+| A | Recusa de imagem sem assinatura (F6-07) e drivers no Ajustes (F3-06), já no CI | as duas PASSOU no iso |
+| B | Base Kinoite fixada por digest e atualização controlada (F6-08) | build com `@sha256`, teste que impede tag solta, aviso semanal de base nova |
+| C | Instalador com a marca Luma, em português e teclado br (F6-05) | ISO entregue com instalador Luma interativo, verificado no CI |
+| D | Primeiro boot (assistente do KDE) e tela de boot (F2-03) | decisão e teste do 1º boot; Plymouth confirmado |
+| E | Registros desatualizados do TESTS e travamento intermitente do instalador no CI | TESTS bate com o CI; causa do travamento com log |
+| F | Migração para Fedora 45 | build, testes e VM verdes no 45 |
+| G | Decisões do usuário: nome/logotipo (0010) e Flathub (0004) | decisões registradas |
+| H | Hardware real e lançamento (Fase 8) | bloqueada até existir máquina de teste |
+
+**Agora:** etapa A (esperando o CI) e preparação da B.
+
 ## Próximo passo
 1. Usuário: seguir [docs/usuario/passos-do-usuario.md](usuario/passos-do-usuario.md):
    - A: chave cosign para a publicação assinada;

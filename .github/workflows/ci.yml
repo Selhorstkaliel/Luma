@@ -19,6 +19,8 @@ jobs:
       - run: pipx install ruff
       - run: scripts/ci/lint.sh
       - run: scripts/ci/unit.sh
+      # F6-08: digests atuais da base Fedora e se diferem do build/base.env (só informa)
+      - run: scripts/ci/atualizar-base.sh
 
   imagem:
     runs-on: ubuntu-24.04

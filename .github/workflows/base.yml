@@ -1,0 +1,16 @@
+# Base fixada por digest (F6-08): uma vez por semana (e sob demanda) confere se a Fedora publicou base nova.
+# [H] O agendamento do GitHub só roda no branch padrão; o ci.yml também roda a conferência a cada push.
+# Só avisa; quem troca a base é um commit revisado com scripts/ci/atualizar-base.sh --gravar.
+name: base
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 9 * * 1"
+permissions:
+  contents: read
+jobs:
+  conferir:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/ci/atualizar-base.sh
