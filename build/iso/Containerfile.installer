@@ -3,7 +3,8 @@
 # (--bootc-installer-payload-ref). Padrão documentado pelo osbuild ("FROM <bootc> + dnf install anaconda").
 # Os pacotes exatos que o Anaconda exige no Fedora 44 são hipótese [H]; o CI confirma ou derruba.
 ARG LUMA_IMAGE=localhost/luma:44
-ARG TOOLS_IMAGE=quay.io/fedora/fedora:44
+# Mesmo digest do TOOLS_DIGEST do Containerfile (F6-08; scripts/ci/atualizar-base.sh --gravar troca os dois)
+ARG TOOLS_IMAGE=quay.io/fedora/fedora:44@sha256:cb3bd21415bd82a2fae1a9379f3f972fa8e78d460c9f86101274d13230dd6fd6
 
 # Marca Luma no Anaconda (F6-05): imagens rasterizadas aqui, sem levar o rsvg-convert para o instalador
 FROM ${TOOLS_IMAGE} AS marca

@@ -1,13 +1,15 @@
 # Imagem bootc do Luma-OS (decisão 0008): derivada da Fedora Kinoite oficial.
 # Identidade (os-release), firewall de entrada fechada e, desde a Fase 2 (incremento 1), o tema Luma como padrão.
 #   podman build --build-arg FEDORA_VERSION=44 -t localhost/luma:44 .
-# A base ainda é referenciada por tag; fixar por digest é tarefa da Fase 1 (decisão 0009).
+# Base fixada por digest (F6-08, decisão 0009): trocar só com scripts/ci/atualizar-base.sh --gravar e commit revisado.
 ARG BASE_IMAGE=quay.io/fedora/fedora-kinoite
 ARG TOOLS_IMAGE=quay.io/fedora/fedora
 ARG FEDORA_VERSION=44
+ARG BASE_DIGEST=sha256:dd2ab3a194d07ddbe1cecedab1e14050e07929c9806a9175d65730a263c41e3c
+ARG TOOLS_DIGEST=sha256:cb3bd21415bd82a2fae1a9379f3f972fa8e78d460c9f86101274d13230dd6fd6
 
 # Estágio de montagem do tema: rasteriza os wallpapers (rsvg-convert) sem levar a ferramenta para a imagem final
-FROM ${TOOLS_IMAGE}:${FEDORA_VERSION} AS tema
+FROM ${TOOLS_IMAGE}:${FEDORA_VERSION}@${TOOLS_DIGEST} AS tema
 RUN dnf -y install librsvg2-tools && dnf clean all
 COPY themes/ /src/themes/
 COPY plasma/ /src/plasma/
@@ -15,7 +17,7 @@ COPY icons/ /src/icons/
 COPY wallpapers/ /src/wallpapers/
 RUN /src/themes/build.sh /out
 
-FROM ${BASE_IMAGE}:${FEDORA_VERSION}
+FROM ${BASE_IMAGE}:${FEDORA_VERSION}@${BASE_DIGEST}
 
 ARG FEDORA_VERSION
 ARG LUMA_VERSION=0.9.0-dev

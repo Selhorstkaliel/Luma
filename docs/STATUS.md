@@ -45,7 +45,7 @@ Uma etapa por vez; cada uma só fecha com evidência em [TESTS.md](TESTS.md).
 | G | Decisões do usuário: nome/logotipo (0010) e Flathub (0004) | decisões registradas |
 | H | Hardware real e lançamento (Fase 8) | bloqueada até existir máquina de teste |
 
-**Agora:** etapa A (esperando o CI) e preparação da B.
+**Agora:** etapa A (esperando o CI) e etapa B (base fixada por digest no código; falta o build do iso por ela).
 
 ## Próximo passo
 1. Usuário: seguir [docs/usuario/passos-do-usuario.md](usuario/passos-do-usuario.md):

@@ -47,15 +47,17 @@ jobs:
         run: |
           sudo podman build --build-arg FEDORA_VERSION=$FEDORA_VERSION --build-arg LUMA_VERSION=$LUMA_VERSION -t localhost/luma:$FEDORA_VERSION .
           sudo podman build -f build/iso/Containerfile.installer --build-arg LUMA_IMAGE=localhost/luma:$FEDORA_VERSION -t localhost/luma-installer:$FEDORA_VERSION .
-          # A base sem nada do Luma: a mesma tag de que o Containerfile parte
-          sudo podman pull quay.io/fedora/fedora-kinoite:$FEDORA_VERSION
-          sudo podman tag quay.io/fedora/fedora-kinoite:$FEDORA_VERSION localhost/kinoite:$FEDORA_VERSION
+          # Mesma base do Luma (F6-08): a Kinoite pura pelo digest fixado no Containerfile
+          base="quay.io/fedora/fedora-kinoite:$FEDORA_VERSION@$(sed -n 's/^ARG BASE_DIGEST=//p' Containerfile)"
+          sudo podman pull "$base"
+          sudo podman tag "$base" localhost/kinoite:$FEDORA_VERSION
           sudo podman build -f build/iso/Containerfile.installer --build-arg LUMA_IMAGE=localhost/kinoite:$FEDORA_VERSION -t localhost/kinoite-installer:$FEDORA_VERSION .
       - name: Medir a Kinoite pura
         run: sudo WORK_DIR="$WORK" scripts/ci/vm-medicao.sh kinoite localhost/kinoite:$FEDORA_VERSION localhost/kinoite-installer:$FEDORA_VERSION "$EV"
       - name: Liberar as imagens da Kinoite (disco do runner; run medicao #2 travou na instalação do Luma)
         run: |
-          sudo podman rmi -f localhost/kinoite-installer:$FEDORA_VERSION localhost/kinoite:$FEDORA_VERSION quay.io/fedora/fedora-kinoite:$FEDORA_VERSION || true
+          base="quay.io/fedora/fedora-kinoite:$FEDORA_VERSION@$(sed -n 's/^ARG BASE_DIGEST=//p' Containerfile)"
+          sudo podman rmi -f localhost/kinoite-installer:$FEDORA_VERSION localhost/kinoite:$FEDORA_VERSION "$base" || true
           sudo podman image prune -f || true
           sudo rm -rf "$WORK/kinoite"
           df -h / /mnt

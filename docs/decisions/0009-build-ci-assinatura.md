@@ -8,7 +8,7 @@ O host de desenvolvimento tem 7,7 GiB de RAM, e o WSL já travou durante um buil
 ## Decisão (aceita)
 - O CI do GitHub Actions (`.github/workflows/ci.yml`) roda lint e testes unitários, depois `podman build` da imagem, `tests/image/test-image.sh` dentro do container e o manifesto de pacotes como artefato.
 - O CI tem `permissions: contents: read`, **sem login em registro, sem push e sem assinatura**.
-- A base fica referenciada por tag na Fase 0. Na Fase 1 passa a ser fixada por digest, com atualização por PR revisado.
+- A base é fixada por digest desde 2026-11-03 (F6-08): `ARG BASE_DIGEST`/`TOOLS_DIGEST` no `Containerfile`. Trocar a base é um commit revisado gerado por `scripts/ci/atualizar-base.sh --gravar`; o CI avisa quando a Fedora publica base nova.
 
 ## Pendente de autorização (não implementar antes)
 - Publicar a imagem no GHCR (`ghcr.io/selhorstkaliel/luma`). Publicar torna a imagem pública e cria um canal de atualização usado pelas máquinas instaladas.
