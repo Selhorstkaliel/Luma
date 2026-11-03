@@ -14,7 +14,7 @@ REG=localhost:5000
 tmp="$(mktemp -d /var/tmp/luma-recusa.XXXXXX)"
 log() { printf '[F6-07] %s\n' "$*" >&2; }
 # iso #48: rodado com sudo, o PATH perdia o cosign do cosign-installer e o script saía com 127 sem mensagem
-for c in podman cosign curl; do
+for c in podman cosign curl skopeo; do
 	command -v "$c" >/dev/null || { log "FALHOU: falta o comando $c (PATH=$PATH)"; exit 1; }
 done
 # Chamada pelo trap (SC2317/SC2329 no ShellCheck)
@@ -26,14 +26,19 @@ trap limpa EXIT
 podman run -d --name luma-reg -p 5000:5000 docker.io/library/registry:2.8.3 >/dev/null
 for _ in $(seq 1 20); do curl -sf "http://$REG/v2/" >/dev/null && break; sleep 1; done
 
-# 2. Imagens de teste mínimas (a política vale pelo nome do repositório, não pelo conteúdo)
-mkdir -p "$tmp/ctx"
-echo "imagem de teste F6-07: não é o Luma" >"$tmp/ctx/LEIA-ME"
-printf 'FROM scratch\nCOPY LEIA-ME /LEIA-ME\n' >"$tmp/ctx/Containerfile"
-podman build -q -t "$REG/luma:teste-sem-assinatura" "$tmp/ctx" >/dev/null
-podman tag "$REG/luma:teste-sem-assinatura" "$REG/luma:teste-chave-errada"
-podman push -q --tls-verify=false "$REG/luma:teste-sem-assinatura"
-podman push -q --tls-verify=false "$REG/luma:teste-chave-errada"
+# 2. Imagens de teste mínimas (a política vale pelo nome do repositório, não pelo conteúdo). Conteúdos diferentes:
+# o cosign anexa a assinatura pelo digest, e no iso #49 as duas tags eram a mesma imagem, então a "sem assinatura"
+# herdou a assinatura da chave errada e o caso "nenhuma assinatura" não foi testado.
+for tag in teste-sem-assinatura teste-chave-errada; do
+	mkdir -p "$tmp/ctx-$tag"
+	echo "imagem de teste F6-07 ($tag): não é o Luma" >"$tmp/ctx-$tag/LEIA-ME"
+	printf 'FROM scratch\nCOPY LEIA-ME /LEIA-ME\n' >"$tmp/ctx-$tag/Containerfile"
+	podman build -q -t "$REG/luma:$tag" "$tmp/ctx-$tag" >/dev/null
+	podman push -q --tls-verify=false "$REG/luma:$tag"
+done
+d1="$(skopeo inspect --tls-verify=false --format '{{.Digest}}' "docker://$REG/luma:teste-sem-assinatura")"
+d2="$(skopeo inspect --tls-verify=false --format '{{.Digest}}' "docker://$REG/luma:teste-chave-errada")"
+if [ -z "$d1" ] || [ "$d1" = "$d2" ]; then log "FALHOU: as imagens de teste têm o mesmo digest ($d1)"; exit 1; fi
 
 # Chave descartável, gerada aqui e apagada no fim; nunca a chave do projeto. Sem envio ao Rekor público.
 (cd "$tmp" && COSIGN_PASSWORD=teste-f6-07 cosign generate-key-pair >/dev/null)
@@ -64,15 +69,20 @@ podman run --rm "$img" sh -c 'command -v skopeo' >/dev/null || { log "FALHOU: a 
 log "política da imagem para o canal: $(podman run --rm "$img" python3 -c "import json; print(json.load(open('/etc/containers/policy.json'))['transports']['docker'].get('$CANAL'))")"
 
 falhas=0
-for tag in teste-sem-assinatura teste-chave-errada; do
+# Cada caso precisa ser recusado pelo motivo certo: sem assinatura = assinatura ausente; chave errada = verificação
+confere() {
+	local tag="$1" motivo="$2" out
 	if out="$(tenta "$tag")"; then
 		log "FALHOU: $CANAL:$tag foi ACEITA: $(tail -n 3 <<<"$out" | tr '\n' ' ')"; falhas=$((falhas + 1))
-	elif grep -qiE 'signature|signed' <<<"$out"; then
+	elif grep -qiE "$motivo" <<<"$out"; then
 		log "PASSOU: $CANAL:$tag recusada: $(grep -iE 'signature|signed' <<<"$out" | tail -n 1)"
 	else
-		log "FALHOU: $CANAL:$tag deu erro, mas não de assinatura (rede?): $(tail -n 3 <<<"$out" | tr '\n' ' ')"; falhas=$((falhas + 1))
+		log "FALHOU: $CANAL:$tag recusada por outro motivo (esperado /$motivo/): $(tail -n 3 <<<"$out" | tr '\n' ' ')"
+		falhas=$((falhas + 1))
 	fi
-done
+}
+confere teste-sem-assinatura 'signature was required|no signature|not signed|signatures? (does not|do not) exist|no (valid )?signatures'
+confere teste-chave-errada 'verification failed|invalid signature'
 # Controle positivo: a imagem assinada do canal continua aceita com o mirror configurado
 if out="$(tenta "${POSITIVO_TAG:-44}")"; then
 	log "PASSOU: $CANAL:${POSITIVO_TAG:-44} (assinada pela chave do projeto) aceita"
