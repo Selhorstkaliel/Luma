@@ -45,7 +45,7 @@ Uma etapa por vez; cada uma só fecha com evidência em [TESTS.md](TESTS.md).
 | G | Decisões do usuário: nome/logotipo (0010) e Flathub (0004) | decisões registradas |
 | H | Hardware real e lançamento (Fase 8) | bloqueada até existir máquina de teste |
 
-**Agora:** etapa A (esperando o CI) e etapa B (base fixada por digest no código; falta o build do iso por ela).
+**Agora:** etapa A **fechada** (F6-07 e F3-06 PASSOU, iso #51) e etapa B **fechada na fixação** (F6-08 PASSOU, ci #84). B2 (rebuild periódico com as atualizações de segurança e levantamento dos fontes GPL) aguarda decisão do usuário. Próxima: etapa C.
 
 ## Próximo passo
 1. Usuário: seguir [docs/usuario/passos-do-usuario.md](usuario/passos-do-usuario.md):
