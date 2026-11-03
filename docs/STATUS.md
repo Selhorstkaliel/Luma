@@ -45,7 +45,7 @@ Uma etapa por vez; cada uma só fecha com evidência em [TESTS.md](TESTS.md).
 | G | Decisões do usuário: nome/logotipo (0010) e Flathub (0004) | decisões registradas |
 | H | Hardware real e lançamento (Fase 8) | bloqueada até existir máquina de teste |
 
-**Agora:** etapa A **fechada** (F6-07 e F3-06 PASSOU, iso #51) e etapa B **fechada na fixação** (F6-08 PASSOU, ci #84). B2 aprovada pelo usuário: rebuild semanal automático com todos os testes antes de publicar (F6-09) e manifesto de fontes assinado + oferta escrita (F6-10), no código; falta o 1º run. Depois: etapa C.
+**Agora:** etapas A e B **fechadas** (2026-11-03): F6-07, F3-06, F6-08, F6-09 (rebuild semanal automático) e F6-10 (fontes) PASSOU. Atual: **etapa C** (instalador com a marca Luma).
 
 ## Próximo passo
 1. Usuário: seguir [docs/usuario/passos-do-usuario.md](usuario/passos-do-usuario.md):
