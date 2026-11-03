@@ -145,6 +145,13 @@ canal_assinado() {
 		&& grep -q 'use-sigstore-attachments: true' /etc/containers/registries.d/luma.yaml
 }
 check F6-I02 "canal ghcr.io/selhorstkaliel/luma só aceita imagem assinada pela chave do projeto" canal_assinado
+# shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
+fontes_ok() {
+	test -s /usr/share/doc/luma/FONTES.md || return 1
+	# Todo pacote (menos as chaves gpg-pubkey) aponta para um SRPM: o manifesto de fontes cobre a imagem inteira
+	[ "$(rpm -qa --qf '%{NAME} %{SOURCERPM}\n' | grep -v '^gpg-pubkey ' | grep -cv '\.src\.rpm$')" = 0 ]
+}
+check F6-I03 "fontes: docs/FONTES.md na imagem e SRPM conhecido para os pacotes" fontes_ok
 check F4-I01 "jogos: gamemoderun, mangohud e gamescope presentes" bash -c 'command -v gamemoderun && command -v mangohud && command -v gamescope'
 check F4-I02 "jogos: luma-jogos gera os comandos Flatpak de usuário" bash -c 'luma-jogos --simular instalar steam | grep -q "flatpak install --user"'
 # A Kinoite traz arquivos .repo do RPM Fusion DESABILITADOS (fedora-workstation-repositories) [H]; a decisão

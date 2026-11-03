@@ -38,6 +38,8 @@ COPY apps/settings/data/org.luma.boas-vindas-autostart.desktop /etc/xdg/autostar
 # Assistente de drivers (decisão 0014): detecta o hardware e oferece ações, só com confirmação do usuário
 COPY apps/drivers/luma_drivers/ /usr/share/luma-drivers/luma_drivers/
 COPY apps/drivers/data/luma-drivers /usr/bin/luma-drivers
+# Onde está o código-fonte e a oferta escrita (F6-10)
+COPY docs/FONTES.md /usr/share/doc/luma/FONTES.md
 COPY apps/drivers/data/org.luma.drivers-aviso.desktop /etc/xdg/autostart/org.luma.drivers-aviso.desktop
 # Jogos (Fase 4): lojas via Flathub sob demanda, sem RPM Fusion na imagem (decisão 0012)
 COPY gaming/bin/luma-jogos /usr/bin/luma-jogos

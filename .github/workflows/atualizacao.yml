@@ -1,0 +1,43 @@
+# Rebuild periódico (F6-09, aprovado pelo usuário em 2026-11-03): uma vez por semana, e sob demanda, traz a base
+# Fedora mais nova (digests, F6-08) e reconstrói o Luma. O iso.yml roda TODOS os testes e só publica com tudo verde;
+# se algo falhar, nada é publicado e quem já instalou continua na versão anterior.
+# O commit do bot só pode trocar os digests (scripts/ci/so-digests.sh). Mesmo sem base nova, o rebuild traz as
+# atualizações dos pacotes que o build.sh instala do Fedora.
+name: atualizacao
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: atualizacao
+  cancel-in-progress: false
+jobs:
+  base-e-rebuild:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Digests atuais da base
+        run: scripts/ci/atualizar-base.sh --gravar
+      - name: Commit só dos digests (trava)
+        run: |
+          set +e
+          scripts/ci/so-digests.sh .; rc=$?
+          set -e
+          case "$rc" in
+            0) echo "sem base nova" ;;
+            10)
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git commit -qam "Base: atualização automática da Kinoite/Fedora (F6-09)" \
+                -m "$(grep -E "^ARG (BASE|TOOLS)_DIGEST=" Containerfile)"
+              git push origin "HEAD:${GITHUB_REF_NAME}"
+              ;;
+            *) exit 1 ;;
+          esac
+      - name: Rebuild, testes e publicação (iso.yml)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run iso.yml --ref "$GITHUB_REF_NAME"

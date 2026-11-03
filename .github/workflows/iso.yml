@@ -23,6 +23,7 @@ on:
       - tests/vm/**
       - scripts/ci/vm-test.sh
       - scripts/ci/assinatura-recusa.sh
+      - scripts/ci/fontes.py
       - .github/workflows/iso.yml
 permissions:
   contents: read
@@ -187,3 +188,26 @@ jobs:
       - name: Recusa de imagem sem assinatura (F6-07)
         if: steps.pub.outputs.publicar == 'sim'
         run: sudo env "PATH=$PATH" scripts/ci/assinatura-recusa.sh localhost/luma:$FEDORA_VERSION
+      # F6-10 (docs/FONTES.md): lista de pacotes, licenças e fontes (SRPM no koji do Fedora) da imagem publicada,
+      # anexada como atestado assinado com a chave do projeto e guardada no run por 90 dias
+      - name: Manifesto de fontes (F6-10)
+        if: steps.pub.outputs.publicar == 'sim'
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          sudo podman run --rm -v "$PWD/scripts/ci:/s:ro" localhost/luma:$FEDORA_VERSION python3 /s/fontes.py > "$RUNNER_TEMP/fontes.json"
+          python3 -c "import json,sys; d=json.load(open(sys.argv[1])); print('fontes:', d['pacotes'], 'pacotes,', d['srpms'], 'SRPMs, sem SRPM:', [i['pacote'] for i in d['sem_srpm']])" "$RUNNER_TEMP/fontes.json"
+          digest="$(sudo cat "$RUNNER_TEMP/digest")"
+          tipo=https://github.com/Selhorstkaliel/Luma/fontes/v1
+          cosign attest --yes --key env://COSIGN_PRIVATE_KEY --type "$tipo" --predicate "$RUNNER_TEMP/fontes.json" "$IMAGEM_GHCR@$digest"
+          cosign verify-attestation --key configs/etc/pki/containers/luma-cosign.pub --type "$tipo" "$IMAGEM_GHCR@$digest" >/dev/null
+          echo "atestado de fontes anexado e conferido em $IMAGEM_GHCR@$digest"
+          cp "$RUNNER_TEMP/fontes.json" "$RUNNER_TEMP/fontes-${GITHUB_SHA::7}.json"
+      - uses: actions/upload-artifact@v4
+        if: steps.pub.outputs.publicar == 'sim'
+        with:
+          name: luma-${{ env.LUMA_VERSION }}-${{ github.sha }}-fontes
+          path: ${{ runner.temp }}/fontes-*.json
+          retention-days: 90
