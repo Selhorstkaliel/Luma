@@ -205,6 +205,18 @@ class Seguranca(unittest.TestCase):
                 self.assertFalse(any("rpmfusion" in a or "nvidia" in a.lower() for a in c), i.id)
 
 
+class Aviso(unittest.TestCase):
+    def test_novos_pendentes_nao_repete(self):
+        fs = FakeSys()
+        fs.usb("1-2", "03f0", "c511", "HP", [("07", "")])
+        itens = detect(fs, comandos={"lpstat"})
+        marca = Path(tempfile.mkdtemp()) / "luma/drivers-avisados"
+        self.assertEqual([i.id for i in core.novos_pendentes(itens, marca)], ["impressora-1-2"])
+        self.assertEqual(core.novos_pendentes(itens, marca), [], "o mesmo item não é avisado de novo")
+        fs.usb("1-3", "03f0", "c512", "HP 2", [("07", "")])
+        self.assertEqual([i.id for i in core.novos_pendentes(detect(fs, comandos={"lpstat"}), marca)], ["impressora-1-3"])
+
+
 class Cli(unittest.TestCase):
     def run_cli(self, *args, root):
         env = dict(os.environ, LUMA_ROOT=str(root), PYTHONPATH=str(REPO / "apps/drivers"))
@@ -221,6 +233,18 @@ class Cli(unittest.TestCase):
         lista = self.run_cli(root=fs.root)
         self.assertIn("== Vídeo", lista.stdout)
         p = self.run_cli("--simular", "aplicar", "nao-existe", root=fs.root)
+        self.assertEqual(p.returncode, 64)
+
+    def test_avisar_e_confirmado(self):
+        fs = FakeSys()
+        fs.pci("0000:00:01.0", "0300", "1234", "1111")
+        cfg = tempfile.mkdtemp()
+        env = dict(os.environ, LUMA_ROOT=str(fs.root), PYTHONPATH=str(REPO / "apps/drivers"), XDG_CONFIG_HOME=cfg)
+        p = subprocess.run([sys.executable, "-m", "luma_drivers", "--simular", "--avisar"], env=env,
+                           capture_output=True, text=True)
+        self.assertEqual((p.returncode, p.stdout), (0, ""), "sem pendentes, sem aviso")
+        p = subprocess.run([sys.executable, "-m", "luma_drivers", "--simular", "aplicar", "--confirmado", "nao-existe"],
+                           env=env, capture_output=True, text=True)
         self.assertEqual(p.returncode, 64)
 
 

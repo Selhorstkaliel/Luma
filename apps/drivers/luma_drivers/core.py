@@ -294,3 +294,17 @@ def pendentes(items: list[Item]) -> list[Item]:
 
 def como_dict(items: list[Item]) -> list[dict]:
     return [asdict(i) for i in items]
+
+
+def novos_pendentes(items: list[Item], marcador: Path | str) -> list[Item]:
+    """Pendentes ainda não avisados (aviso no 1º login, F3-06). Grava os ids avisados em `marcador`."""
+    marcador = Path(marcador)
+    try:
+        ja = set(marcador.read_text(encoding="utf-8").split())
+    except OSError:
+        ja = set()
+    novos = [i for i in pendentes(items) if i.id not in ja]
+    if novos:
+        marcador.parent.mkdir(parents=True, exist_ok=True)
+        marcador.write_text("\n".join(sorted(ja | {i.id for i in novos})) + "\n", encoding="utf-8")
+    return novos

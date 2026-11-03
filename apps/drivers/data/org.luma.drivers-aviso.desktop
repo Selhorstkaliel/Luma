@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Luma hardware notice
+Name[pt_BR]=Aviso de hardware do Luma
+Comment[pt_BR]=No login, avisa se algum dispositivo pede ação (Ajustes > Hardware e drivers); não repete o mesmo aviso
+Exec=luma-drivers --avisar
+Icon=luma-logo
+Terminal=false
+NoDisplay=true
+X-KDE-autostart-phase=2
+OnlyShowIn=KDE;

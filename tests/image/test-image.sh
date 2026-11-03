@@ -100,6 +100,7 @@ cmds = (core.mode_commands("claro") + core.mode_commands("escuro") + core.accent
 missing = sorted({c.argv[0] for c in cmds if shutil.which(c.argv[0]) is None})
 missing += sorted({argv[0] for _sid, _l, _i, argv in core.SECTIONS if argv and shutil.which(argv[0]) is None})
 missing += sorted({argv[0] for argv in core.WELCOME_ACTIONS.values() if shutil.which(argv[0]) is None})
+missing += sorted({c for c in ("konsole", "luma-drivers", "notify-send") if shutil.which(c) is None})
 print("programas ausentes:", missing or "nenhum", file=sys.stderr)
 sys.exit(1 if missing else 0)
 EOF
@@ -126,6 +127,7 @@ check F3-I06 "Boas-vindas do Luma no autostart, a do KDE desligada" welcome_auto
 drivers_json() { HOME=/tmp USER=teste luma-drivers --json | python3 -c 'import json,sys; d=json.load(sys.stdin); assert isinstance(d, list)'; }
 check F3-I07 "Drivers: luma-drivers --json roda e devolve uma lista" drivers_json
 check F3-I08 "Drivers: CUPS, fwupd e fprintd na imagem" bash -c 'command -v lpstat && command -v fwupdmgr && command -v fprintd-list'
+check F3-I09 "Drivers: aviso no login (autostart luma-drivers --avisar)" grep -qx 'Exec=luma-drivers --avisar' /etc/xdg/autostart/org.luma.drivers-aviso.desktop
 echo "INFO F3-I08 opcionais: $(for c in ipp-usb airscan-discover sane-find-scanner switcherooctl ratbagctl solaar; do printf '%s=%s ' "$c" "$(command -v "$c" >/dev/null && echo sim || echo nao)"; done)"
 # shellcheck disable=SC2317,SC2329  # chamada indiretamente por check
 ptbr_defaults() {

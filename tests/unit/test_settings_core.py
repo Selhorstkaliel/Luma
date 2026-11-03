@@ -71,10 +71,21 @@ class TestCommands(unittest.TestCase):
 
     def test_sections_open_existing_tools(self):
         ids = [s[0] for s in core.SECTIONS]
-        self.assertEqual(ids, ["sistema", "aparencia", "rede", "aplicativos", "privacidade", "atualizacoes"])
+        self.assertEqual(ids, ["sistema", "aparencia", "drivers", "rede", "aplicativos", "privacidade", "atualizacoes"])
         for sid, _label, _icon, argv in core.SECTIONS:
-            if sid != "aparencia":
+            if sid in ("aparencia", "drivers"):
+                self.assertIsNone(argv, "páginas internas do app")
+            else:
                 self.assertIn(argv[0], ("systemsettings", "plasma-discover"))
+
+    def test_driver_launch(self):
+        # F3-06: janela de configuração abre direto; o resto passa pelo Konsole com o luma-drivers já confirmado
+        abre = {"id": "digital", "acao": {"rotulo": "x", "comandos": [["systemsettings", "kcm_users"]]}}
+        self.assertEqual(core.driver_launch(abre), ["systemsettings", "kcm_users"])
+        fw = {"id": "firmware-fwupd", "acao": {"rotulo": "x", "comandos": [["fwupdmgr", "refresh"], ["fwupdmgr", "update"]]}}
+        self.assertEqual(core.driver_launch(fw),
+                         ["konsole", "--hold", "-e", "luma-drivers", "aplicar", "--confirmado", "firmware-fwupd"])
+        self.assertIsNone(core.driver_launch({"id": "video-x", "acao": None}))
 
 
 class TestTools(unittest.TestCase):

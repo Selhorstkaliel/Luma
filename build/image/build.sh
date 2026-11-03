@@ -34,7 +34,7 @@ echo "luma: steam-devices $(rpm -q steam-devices 2>/dev/null || echo 'indisponí
 # Drivers e periféricos (decisão 0014), só do Fedora: impressão e scanner sem driver (IPP Everywhere, IPP-over-USB,
 # eSCL), firmware pelo LVFS, leitor de digital, gráficos híbridos e mouses/teclados gamer. Os nomes no F44 são [H];
 # --skip-unavailable e o log dizem o que entrou. O luma-drivers só oferece ações das ferramentas presentes.
-drv_pkgs=(cups ipp-usb sane-airscan sane-backends fwupd fprintd fprintd-pam switcheroo-control libratbag-ratbagd solaar)
+drv_pkgs=(cups ipp-usb sane-airscan sane-backends fwupd fprintd fprintd-pam switcheroo-control libratbag-ratbagd solaar libnotify)
 dnf -y install --skip-unavailable "${drv_pkgs[@]}"
 for p in "${drv_pkgs[@]}"; do echo "luma: drivers: $(rpm -q "$p" 2>/dev/null || echo "$p indisponível")"; done
 

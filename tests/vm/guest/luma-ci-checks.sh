@@ -184,6 +184,15 @@ okd=FALHOU
 python3 -c 'import json,sys; d=json.loads(sys.argv[1]); assert any(i["categoria"]=="video" for i in d)' "$drv" 2>/dev/null && [ "$rcd" = 0 ] && okd=PASSOU
 res F3-05 "$okd" "luma-drivers --json rc=$rcd itens=$(grep -c '"id"' <<<"$drv") video=$(grep -o '"dispositivo": "Placa de vídeo[^"]*"' <<<"$drv" | head -n1) erro=$(head -c 200 /var/luma-ci/drivers.err | tr '\n' ' ')"
 
+# --- Página Hardware e drivers no Ajustes (F3-06) ----------------------------------------------------------
+asuser luma-ajustes --pagina drivers >/var/luma-ci/ajustes-drivers.log 2>&1 &
+sleep 20
+pg_vivo=no; pgrep -u "$U" -f 'luma_ajustes --pagina drivers' >/dev/null && pg_vivo=yes
+shot ajustes-drivers
+pkill -u "$U" -f 'luma_ajustes --pagina drivers' || true
+dump AVISO asuser luma-drivers --simular --avisar
+res F3-06 "$([ "$pg_vivo" = yes ] && echo PASSOU || echo FALHOU)" "Ajustes > Hardware e drivers aberto=$pg_vivo log=$(head -c 200 /var/luma-ci/ajustes-drivers.log | tr '\n' ' ')"
+
 # --- Lume (F7-01) -----------------------------------------------------------------------------------------
 lumedir="$home/lume-ci"
 asuser mkdir -p "$lumedir"

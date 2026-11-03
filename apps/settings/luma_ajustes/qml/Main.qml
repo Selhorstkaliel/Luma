@@ -38,7 +38,7 @@ Kirigami.ApplicationWindow {
                     anchors.margins: Kirigami.Units.largeSpacing
                     spacing: Kirigami.Units.smallSpacing
                     model: backend.sections
-                    currentIndex: 1
+                    currentIndex: paginaInicial === "drivers" ? 2 : 1
                     keyNavigationEnabled: true
                     delegate: QQC.ItemDelegate {
                         required property var modelData
@@ -54,8 +54,9 @@ Kirigami.ApplicationWindow {
                                    : parent.hovered ? Qt.alpha(Kirigami.Theme.textColor, 0.06) : "transparent"
                         }
                         onClicked: {
-                            if (modelData.id === "aparencia") {
+                            if (modelData.id === "aparencia" || modelData.id === "drivers") {
                                 sidebar.currentIndex = index;
+                                if (modelData.id === "drivers" && backend.drivers.length === 0) backend.refreshDrivers();
                             } else {
                                 backend.openSection(modelData.id);
                             }
@@ -63,6 +64,12 @@ Kirigami.ApplicationWindow {
                     }
                 }
             }
+
+            StackLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                currentIndex: backend.sections[sidebar.currentIndex] && backend.sections[sidebar.currentIndex].id === "drivers" ? 1 : 0
+                Component.onCompleted: if (paginaInicial === "drivers") backend.refreshDrivers()
 
             // Página Aparência
             QQC.ScrollView {
@@ -211,7 +218,114 @@ Kirigami.ApplicationWindow {
                     }
                 }
             }
+
+            // Página Hardware e drivers (F3-06, decisão 0014): detecta e pergunta; nada roda sem o diálogo
+            QQC.ScrollView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                contentWidth: availableWidth
+                ColumnLayout {
+                    width: parent.width
+                    spacing: Kirigami.Units.largeSpacing
+                    Item { Layout.preferredHeight: Kirigami.Units.largeSpacing }
+                    RowLayout {
+                        Layout.leftMargin: Kirigami.Units.gridUnit * 2
+                        Layout.rightMargin: Kirigami.Units.gridUnit * 2
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: Kirigami.Units.smallSpacing
+                            Kirigami.Heading { level: 1; text: "Hardware e drivers" }
+                            QQC.Label {
+                                Layout.fillWidth: true
+                                wrapMode: Text.Wrap
+                                opacity: 0.75
+                                text: "O que o Luma encontrou no seu computador. Nada é instalado sem você confirmar. "
+                                      + "O driver proprietário da NVIDIA não faz parte do Luma."
+                            }
+                        }
+                        QQC.Button {
+                            text: backend.driversBusy ? "Procurando…" : "Procurar de novo"
+                            icon.name: "view-refresh"
+                            enabled: !backend.driversBusy
+                            onClicked: backend.refreshDrivers()
+                        }
+                    }
+                    QQC.BusyIndicator {
+                        Layout.alignment: Qt.AlignHCenter
+                        running: backend.driversBusy
+                        visible: running
+                    }
+                    Repeater {
+                        model: backend.drivers
+                        delegate: Rectangle {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.leftMargin: Kirigami.Units.gridUnit * 2
+                            Layout.rightMargin: Kirigami.Units.gridUnit * 2
+                            implicitHeight: linha.implicitHeight + Kirigami.Units.largeSpacing * 2
+                            radius: Kirigami.Units.cornerRadius * 3
+                            Kirigami.Theme.colorSet: Kirigami.Theme.View
+                            Kirigami.Theme.inherit: false
+                            color: Kirigami.Theme.backgroundColor
+                            border.color: Qt.alpha(Kirigami.Theme.textColor, 0.12)
+                            RowLayout {
+                                id: linha
+                                anchors.fill: parent
+                                anchors.margins: Kirigami.Units.largeSpacing
+                                spacing: Kirigami.Units.largeSpacing
+                                Kirigami.Chip {
+                                    checkable: false
+                                    closable: false
+                                    text: ({ "ok": "OK", "info": "INFO", "pendente": "FALTA", "sem_suporte": "SEM SUPORTE" })[modelData.estado] || modelData.estado
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 0
+                                    QQC.Label { text: modelData.dispositivo; font.weight: Font.DemiBold; wrapMode: Text.Wrap; Layout.fillWidth: true }
+                                    QQC.Label { text: modelData.detalhe; opacity: 0.7; wrapMode: Text.Wrap; Layout.fillWidth: true }
+                                }
+                                QQC.Button {
+                                    visible: !!modelData.acao
+                                    text: modelData.acao ? modelData.acao.rotulo : ""
+                                    onClicked: {
+                                        confirmar.itemId = modelData.id;
+                                        confirmar.subtitle = modelData.acao.comandos.map(c => c.join(" ")).join("\n");
+                                        confirmar.title = modelData.acao.rotulo;
+                                        confirmar.open();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    QQC.Label {
+                        Layout.leftMargin: Kirigami.Units.gridUnit * 2
+                        visible: !backend.driversBusy && backend.drivers.length === 0
+                        text: "Clique em \"Procurar de novo\" para detectar o hardware."
+                        opacity: 0.7
+                    }
+                    Item { Layout.preferredHeight: Kirigami.Units.gridUnit }
+                }
+            }
+            }
         }
+    }
+
+    Kirigami.PromptDialog {
+        id: confirmar
+        property string itemId
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: "Executar"
+                icon.name: "dialog-ok-apply"
+                onTriggered: { backend.applyDriver(confirmar.itemId); confirmar.close(); }
+            },
+            Kirigami.Action {
+                text: "Cancelar"
+                icon.name: "dialog-cancel"
+                onTriggered: confirmar.close()
+            }
+        ]
     }
 
     component ModeCard: QQC.AbstractButton {

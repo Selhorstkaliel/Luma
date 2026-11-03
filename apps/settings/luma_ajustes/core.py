@@ -141,11 +141,30 @@ def transparency_commands(percent: int) -> list[Command]:
 SECTIONS = [
     ("sistema", "Sistema", "computer-symbolic", ["systemsettings", "kcm_about-distro"]),
     ("aparencia", "Aparência", "preferences-desktop-theme-global-symbolic", None),
+    # Página interna (F3-06, decisão 0014): lista o luma-drivers --json e aplica só depois do diálogo de confirmação
+    ("drivers", "Hardware e drivers", "cpu-symbolic", None),
     ("rede", "Rede", "network-wireless-symbolic", ["systemsettings", "kcm_networkmanagement"]),
     ("aplicativos", "Aplicativos", "preferences-desktop-default-applications-symbolic", ["systemsettings", "kcm_componentchooser"]),
     ("privacidade", "Privacidade", "preferences-desktop-user-password-symbolic", ["systemsettings", "kcm_screenlocker"]),
     ("atualizacoes", "Atualizações", "system-software-update-symbolic", ["plasma-discover", "--mode", "update"]),
 ]
+
+
+# --- Hardware e drivers (F3-06) -------------------------------------------------------------------------------
+# Ações que só abrem uma janela rodam direto; as demais (fwupd, flatpak, luma-jogos) abrem o Konsole com o próprio
+# luma-drivers, para o usuário ver a saída. A confirmação já aconteceu no diálogo do app (--confirmado).
+LANCADORES_DIRETOS = {"systemsettings", "solaar"}
+
+
+def driver_launch(item: dict) -> list | None:
+    """Comando que o app executa para a ação de um item do `luma-drivers --json`; None se não houver ação."""
+    acao = item.get("acao") or {}
+    comandos = acao.get("comandos") or []
+    if not comandos:
+        return None
+    if len(comandos) == 1 and comandos[0][0] in LANCADORES_DIRETOS:
+        return list(comandos[0])
+    return ["konsole", "--hold", "-e", "luma-drivers", "aplicar", "--confirmado", str(item["id"])]
 
 
 # --- Boas-vindas (F3-03) -------------------------------------------------------------------------------------

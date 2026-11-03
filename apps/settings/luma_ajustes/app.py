@@ -2,10 +2,12 @@
 """App Ajustes do Luma: interface QML (Kirigami) + backend PySide6 que executa os comandos de core.py."""
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
 import sys
+import threading
 from pathlib import Path
 
 from PySide6.QtCore import Property, QObject, QUrl, Signal, Slot
@@ -27,6 +29,14 @@ def _read(file: str, group: str, key: str, default: str = "") -> str:
 class Backend(QObject):
     changed = Signal()
     error = Signal(str)
+    driversChanged = Signal()
+    _driversLoaded = Signal(list, str)
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._drivers: list = []
+        self._driversBusy = False
+        self._driversLoaded.connect(self._on_drivers_loaded)
 
     def _run(self, commands: list[core.Command]) -> None:
         for cmd in commands:
@@ -123,6 +133,51 @@ class Backend(QObject):
         core.mark_welcome_done(_config_home())
         QGuiApplication.quit()
 
+    # --- Hardware e drivers (F3-06) ---
+    @Property("QVariantList", notify=driversChanged)
+    def drivers(self) -> list:
+        return self._drivers
+
+    @Property(bool, notify=driversChanged)
+    def driversBusy(self) -> bool:
+        return self._driversBusy
+
+    @Slot()
+    def refreshDrivers(self) -> None:
+        """Roda `luma-drivers --json` numa thread (fprintd e journalctl podem levar alguns segundos)."""
+        if self._driversBusy:
+            return
+        self._driversBusy = True
+        self.driversChanged.emit()
+
+        def trabalho() -> None:
+            try:
+                out = subprocess.run(["luma-drivers", "--json"], capture_output=True, text=True, timeout=90, check=True)
+                self._driversLoaded.emit(json.loads(out.stdout), "")
+            except (OSError, subprocess.SubprocessError, ValueError) as e:
+                self._driversLoaded.emit([], f"Não foi possível detectar o hardware: {e}")
+
+        threading.Thread(target=trabalho, daemon=True).start()
+
+    @Slot(list, str)
+    def _on_drivers_loaded(self, items: list, erro: str) -> None:
+        self._drivers = items
+        self._driversBusy = False
+        self.driversChanged.emit()
+        if erro:
+            self.error.emit(erro)
+
+    @Slot(str)
+    def applyDriver(self, item_id: str) -> None:
+        item = next((i for i in self._drivers if i.get("id") == item_id), None)
+        argv = core.driver_launch(item) if item else None
+        if not argv:
+            return
+        try:
+            subprocess.Popen(argv, start_new_session=True)  # noqa: S603 — comando de core.driver_launch
+        except OSError as e:
+            self.error.emit(f"Não foi possível executar a ação: {e}")
+
     @Slot(str)
     def openSection(self, section_id: str) -> None:
         for sid, _label, _icon, argv in core.SECTIONS:
@@ -148,6 +203,9 @@ def main() -> int:
     engine = QQmlApplicationEngine()
     backend = Backend()
     engine.rootContext().setContextProperty("backend", backend)
+    # `luma-ajustes --pagina drivers` abre direto na página Hardware e drivers (teste na VM e atalhos)
+    pagina = args[args.index("--pagina") + 1] if "--pagina" in args and args.index("--pagina") + 1 < len(args) else ""
+    engine.rootContext().setContextProperty("paginaInicial", pagina)
     qml = "BoasVindas.qml" if welcome else "Main.qml"
     engine.load(QUrl.fromLocalFile(str(Path(__file__).with_name("qml") / qml)))
     if not engine.rootObjects():

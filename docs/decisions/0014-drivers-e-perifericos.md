@@ -23,4 +23,4 @@ O Luma é imutável (bootc/ostree). Não dá para instalar drivers como num sist
 ## Consequências
 - Hardware que precisa de driver proprietário (NVIDIA proprietário, Wi-Fi Broadcom `wl`, alguns leitores de digital e scanners) continua sem suporte. O assistente diz isso claramente.
 - **Sem hardware de teste**, a detecção é validada com um sysfs simulado (testes unitários), na imagem (F3-I07, F3-I08) e na VM do CI (F3-05). Placas reais, impressoras, controles e leitores **não** foram testados [H]. As regras de detecção (vendedores USB, classes PCI) podem errar em modelos específicos.
-- Próximo incremento: uma página no app Ajustes e um aviso no primeiro login (só quando houver item "falta"), usando o mesmo `luma-drivers --json`.
+- Incremento 2 (2026-11-03, F3-06): página "Hardware e drivers" no app Ajustes e aviso no login (autostart `luma-drivers --avisar`, só para itens "falta" ainda não avisados), usando o mesmo `luma-drivers --json`; cada ação passa por um diálogo que mostra os comandos antes de rodar.
