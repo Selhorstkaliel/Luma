@@ -6,7 +6,7 @@ ARG BASE_IMAGE=quay.io/fedora/fedora-kinoite
 ARG TOOLS_IMAGE=quay.io/fedora/fedora
 ARG FEDORA_VERSION=44
 ARG BASE_DIGEST=sha256:7b2a47a009e38d8bc952f5cae5da3fd33e04253783eaf7b709dcd8b21c0ace8c
-ARG TOOLS_DIGEST=sha256:cb3bd21415bd82a2fae1a9379f3f972fa8e78d460c9f86101274d13230dd6fd6
+ARG TOOLS_DIGEST=sha256:4688bc8003a1a6a7815e5f9d1f1b5c6bc9cafa582654af7cec61435d91655e3b
 
 # Estágio de montagem do tema: rasteriza os wallpapers (rsvg-convert) sem levar a ferramenta para a imagem final
 FROM ${TOOLS_IMAGE}:${FEDORA_VERSION}@${TOOLS_DIGEST} AS tema
@@ -20,6 +20,8 @@ RUN /src/themes/build.sh /out
 FROM ${BASE_IMAGE}:${FEDORA_VERSION}@${BASE_DIGEST}
 
 ARG FEDORA_VERSION
+ARG BASE_DIGEST
+ARG TOOLS_DIGEST
 ARG LUMA_VERSION=0.9.0-dev
 
 COPY configs/usr/ /usr/
@@ -55,4 +57,6 @@ LABEL org.opencontainers.image.title="Luma-OS" \
       org.opencontainers.image.description="Luma-OS Midnight Edition (base Fedora Kinoite)" \
       org.opencontainers.image.source="https://github.com/Selhorstkaliel/Luma" \
       org.opencontainers.image.version="${LUMA_VERSION}" \
+      org.luma.base.digest="${BASE_DIGEST}" \
+      org.luma.tools.digest="${TOOLS_DIGEST}" \
       containers.bootc="1"

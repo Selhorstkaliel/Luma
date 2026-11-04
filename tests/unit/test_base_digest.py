@@ -45,13 +45,27 @@ class BaseDigest(unittest.TestCase):
                 self.assertFalse("fedora-kinoite" in alvo and "@" not in alvo and "$base" not in alvo,
                                  f"{wf.name}: pull por tag: {alvo}")
 
-    def test_atualizacao_diaria(self):
-        # ci #89: o quay.io apagou o digest fixado em menos de um dia; a conferência semanal não bastava
+    def test_builds_resolvem_a_base_atual(self):
+        # ci #89 e #91: o quay.io apagou os digests do repositório em horas; todo build resolve o atual antes
+        for wf in sorted((REPO / ".github/workflows").glob("*.yml")):
+            texto = wf.read_text()
+            m = re.search(r"podman build (?!-f )[^\n]*-t localhost/luma", texto)
+            if not m:
+                continue
+            antes = texto[:m.start()]
+            self.assertIn("atualizar-base.sh --gravar", antes, f"{wf.name}: build sem resolver a base atual")
+
+    def test_labels_da_base(self):
+        for nome in ("org.luma.base.digest=\"${BASE_DIGEST}\"", "org.luma.tools.digest=\"${TOOLS_DIGEST}\""):
+            self.assertIn(nome, CF)
+        final = CF[CF.rindex("\nFROM "):]
+        self.assertIn("ARG BASE_DIGEST\n", final)
+        self.assertIn("ARG TOOLS_DIGEST\n", final)
+
+    def test_atualizacao_sem_commit_do_bot(self):
         wf = (REPO / ".github/workflows/atualizacao.yml").read_text()
-        crons = re.findall(r'cron: "([^"]+)"', wf)
-        self.assertTrue(crons, "atualizacao.yml sem agendamento")
-        self.assertTrue(all(c.split()[2:] == ["*", "*", "*"] for c in crons), f"agendamento não diário: {crons}")
-        self.assertIn("if: env.REBUILD == 'sim'", wf)
+        self.assertNotIn("git push", wf)
+        self.assertIn("gh workflow run iso.yml", wf)
 
 
 if __name__ == "__main__":

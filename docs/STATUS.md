@@ -37,7 +37,7 @@ Uma etapa por vez; cada uma só fecha com evidência em [TESTS.md](TESTS.md).
 | Etapa | Conteúdo | Fecha quando |
 |---|---|---|
 | A | Recusa de imagem sem assinatura (F6-07) e drivers no Ajustes (F3-06), já no CI | as duas PASSOU no iso |
-| B | Base Kinoite fixada por digest e atualização controlada (F6-08) | build com `@sha256`, teste que impede tag solta, aviso semanal de base nova |
+| B | Base Kinoite por digest e atualização controlada (F6-08) | build com `@sha256` resolvido no próprio run e registrado nas labels da imagem; teste que impede build sem resolver a base |
 | C | Instalador com a marca Luma, em português e teclado br (F6-05) | ISO entregue com instalador Luma interativo, verificado no CI |
 | D | Primeiro boot (assistente do KDE) e tela de boot (F2-03) | decisão e teste do 1º boot; Plymouth confirmado |
 | E | Registros desatualizados do TESTS e travamento intermitente do instalador no CI | TESTS bate com o CI; causa do travamento com log |
@@ -45,7 +45,7 @@ Uma etapa por vez; cada uma só fecha com evidência em [TESTS.md](TESTS.md).
 | G | Decisões do usuário: nome/logotipo (0010) e Flathub (0004) | decisões registradas |
 | H | Hardware real e lançamento (Fase 8) | bloqueada até existir máquina de teste |
 
-**Agora:** etapas A e B **fechadas** (2026-11-03): F6-07, F3-06, F6-08, F6-09 (rebuild semanal automático) e F6-10 (fontes) PASSOU. Atual: **etapa C** (instalador com a marca Luma).
+**Agora:** etapa A fechada (2026-11-03). Etapa B reaberta em 2026-11-04: o quay.io apagou os digests fixados em menos de um dia e todos os builds quebraram (ci #89 e #91); corrigida resolvendo o digest em cada build (F6-08), falta confirmar no CI. Atual: **etapa C** (instalador com a marca Luma).
 
 ## Próximo passo
 1. Usuário: seguir [docs/usuario/passos-do-usuario.md](usuario/passos-do-usuario.md):

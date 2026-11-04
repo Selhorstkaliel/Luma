@@ -68,6 +68,8 @@ jobs:
             echo "OUT=/var/tmp/luma-out" >> "$GITHUB_ENV"
           fi
           findmnt /var/lib/containers/storage || echo "armazenamento do podman no disco raiz"
+      - name: Base atual do quay.io (F6-08; o digest fica no log e nas labels da imagem)
+        run: scripts/ci/atualizar-base.sh --gravar
       - name: Build da imagem Luma (root)
         run: sudo podman build --build-arg FEDORA_VERSION=$FEDORA_VERSION --build-arg LUMA_VERSION=$LUMA_VERSION -t localhost/luma:$FEDORA_VERSION .
       - name: Testes da imagem
