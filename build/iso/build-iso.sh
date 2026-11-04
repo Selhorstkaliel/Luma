@@ -30,6 +30,11 @@ run_tool() {
 		"$image" "$@" >"$log" 2>&1
 }
 [ "$storage" = /var/lib/containers/storage ] || echo "AVISO: armazenamento em $storage; o image-builder espera /var/lib/containers/storage" >&2
+# instalador-ib #8: a ISO do image-builder (~7 GiB) não coube no disco. Etapas intermediárias sem tag saem antes
+# (localhost/luma e o instalador têm tag e ficam); o espaço livre vai para o log antes e, se falhar, depois.
+espaco() { df -h / /mnt "$storage" "$out" 2>/dev/null | awk '!visto[$0]++' >&2 || true; }
+podman image prune -f >/dev/null 2>&1 || true
+echo "espaço antes da ISO:" >&2; espaco
 
 # ISO_FERRAMENTA: bib (padrão: só o bootc-image-builder), auto (image-builder com o bib de reserva) ou image-builder (sem reserva).
 # A ISO entregue e os testes usam "bib" até a do image-builder passar no teste do sistema instalado (iso #37: instalou, mas o
@@ -46,6 +51,7 @@ if [ "$ferramenta" = bib ] || ! run_tool "$IB_IMAGE" "$dir" "$out/image-builder-
 		echo "--- image-builder: linhas de erro ---" >&2
 		grep -aiE 'error|fail|traceback|no such|stage' "$out/image-builder-bootc-installer.log" | tail -n 60 >&2 || true
 		ib_fail="$(tail -n 3 "$out/image-builder-bootc-installer.log" | tr '\n' ' ' | cut -c1-300)"
+		echo "espaço depois da falha:" >&2; espaco
 		[ "$ferramenta" = image-builder ] && { echo "build-iso.sh: ISO_FERRAMENTA=image-builder, sem reserva" >&2; exit 1; }
 		echo "tentando anaconda-iso do bootc-image-builder" >&2
 	fi
@@ -55,6 +61,7 @@ if [ "$ferramenta" = bib ] || ! run_tool "$IB_IMAGE" "$dir" "$out/image-builder-
 		--type anaconda-iso --rootfs btrfs --output /output "$payload"; then
 		tail -n 30 "$out/bootc-image-builder-anaconda-iso.log" >&2
 		echo "build-iso.sh: o bootc-image-builder falhou" >&2
+		espaco
 		exit 1
 	fi
 fi
