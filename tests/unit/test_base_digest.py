@@ -45,6 +45,14 @@ class BaseDigest(unittest.TestCase):
                 self.assertFalse("fedora-kinoite" in alvo and "@" not in alvo and "$base" not in alvo,
                                  f"{wf.name}: pull por tag: {alvo}")
 
+    def test_atualizacao_diaria(self):
+        # ci #89: o quay.io apagou o digest fixado em menos de um dia; a conferência semanal não bastava
+        wf = (REPO / ".github/workflows/atualizacao.yml").read_text()
+        crons = re.findall(r'cron: "([^"]+)"', wf)
+        self.assertTrue(crons, "atualizacao.yml sem agendamento")
+        self.assertTrue(all(c.split()[2:] == ["*", "*", "*"] for c in crons), f"agendamento não diário: {crons}")
+        self.assertIn("if: env.REBUILD == 'sim'", wf)
+
 
 if __name__ == "__main__":
     unittest.main()

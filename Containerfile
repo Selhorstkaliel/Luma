@@ -5,7 +5,7 @@
 ARG BASE_IMAGE=quay.io/fedora/fedora-kinoite
 ARG TOOLS_IMAGE=quay.io/fedora/fedora
 ARG FEDORA_VERSION=44
-ARG BASE_DIGEST=sha256:dd2ab3a194d07ddbe1cecedab1e14050e07929c9806a9175d65730a263c41e3c
+ARG BASE_DIGEST=sha256:7b2a47a009e38d8bc952f5cae5da3fd33e04253783eaf7b709dcd8b21c0ace8c
 ARG TOOLS_DIGEST=sha256:cb3bd21415bd82a2fae1a9379f3f972fa8e78d460c9f86101274d13230dd6fd6
 
 # Estágio de montagem do tema: rasteriza os wallpapers (rsvg-convert) sem levar a ferramenta para a imagem final

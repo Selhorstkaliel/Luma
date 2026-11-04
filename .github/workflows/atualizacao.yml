@@ -1,5 +1,6 @@
-# Rebuild periódico (F6-09, aprovado pelo usuário em 2026-11-03): uma vez por semana, e sob demanda, traz a base
-# Fedora mais nova (digests, F6-08) e reconstrói o Luma. O iso.yml roda TODOS os testes e só publica com tudo verde;
+# Rebuild periódico (F6-09, aprovado pelo usuário em 2026-11-03): todo dia confere a base Fedora (digests, F6-08) e,
+# se mudou, commita os digests novos e reconstrói o Luma; às segundas reconstrói mesmo sem base nova. Diário porque o
+# quay.io apaga digests antigos (ci #89, 2026-11-04: "manifest unknown" menos de um dia depois de fixar). O iso.yml roda TODOS os testes e só publica com tudo verde;
 # se algo falhar, nada é publicado e quem já instalou continua na versão anterior.
 # O commit do bot só pode trocar os digests (scripts/ci/so-digests.sh). Mesmo sem base nova, o rebuild traz as
 # atualizações dos pacotes que o build.sh instala do Fedora.
@@ -7,7 +8,7 @@ name: atualizacao
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 6 * * 1"
+    - cron: "17 6 * * *"
 permissions:
   contents: write
   actions: write
@@ -27,17 +28,19 @@ jobs:
           scripts/ci/so-digests.sh .; rc=$?
           set -e
           case "$rc" in
-            0) echo "sem base nova" ;;
+            0) echo "sem base nova"; echo "REBUILD=$([ "$(date -u +%u)" = 1 ] || [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] && echo sim || echo nao)" >>"$GITHUB_ENV" ;;
             10)
               git config user.name "github-actions[bot]"
               git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
               git commit -qam "Base: atualização automática da Kinoite/Fedora (F6-09)" \
                 -m "$(grep -E "^ARG (BASE|TOOLS)_DIGEST=" Containerfile)"
               git push origin "HEAD:${GITHUB_REF_NAME}"
+              echo "REBUILD=sim" >>"$GITHUB_ENV"
               ;;
             *) exit 1 ;;
           esac
       - name: Rebuild, testes e publicação (iso.yml)
+        if: env.REBUILD == 'sim'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run iso.yml --ref "$GITHUB_REF_NAME"

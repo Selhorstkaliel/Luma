@@ -26,8 +26,18 @@ for var in BASE_DIGEST TOOLS_DIGEST; do
 	else
 		echo "$var ${IMAGENS[$var]}: $d (fixado: ${velho:-ausente})"
 		mudou=1
+		# ci #89 (2026-11-04): o quay.io apagou o digest fixado da Kinoite e o build quebrou com "manifest unknown".
+		# O registro não guarda digests antigos por tempo conhecido; avisar aqui, com a causa, antes do build.
+		if [ -n "$velho" ] && ! skopeo inspect --raw "docker://${IMAGENS[$var]%:*}@$velho" >/dev/null 2>&1; then
+			sumiu="${sumiu:-} $var"
+		fi
 	fi
 done
+if [ -n "${sumiu:-}" ] && [ "${1:-}" != --gravar ]; then
+	msg="a base fixada ($sumiu) não existe mais no registro; rode scripts/ci/atualizar-base.sh --gravar e faça commit"
+	if [ -n "${GITHUB_ACTIONS:-}" ]; then echo "::error::$msg"; else echo "atualizar-base.sh: $msg" >&2; fi
+	exit 1
+fi
 
 if [ "${1:-}" = --gravar ]; then
 	sed -i -E "s|^ARG BASE_DIGEST=.*|ARG BASE_DIGEST=${novo[BASE_DIGEST]}|; s|^ARG TOOLS_DIGEST=.*|ARG TOOLS_DIGEST=${novo[TOOLS_DIGEST]}|" "$CF"
