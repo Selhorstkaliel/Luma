@@ -44,6 +44,7 @@ jobs:
         run: sudo apt-get update -q && sudo apt-get install -y -q qemu-system-x86 qemu-utils ovmf socat swtpm swtpm-tools xorriso tesseract-ocr
       - name: Imagem e instalador do Luma
         run: |
+          scripts/ci/atualizar-base.sh --gravar   # base atual do quay.io, a mesma em todo o run (F6-08)
           sudo podman build --build-arg FEDORA_VERSION=$FEDORA_VERSION --build-arg LUMA_VERSION=$LUMA_VERSION -t localhost/luma:$FEDORA_VERSION .
           sudo podman build -f build/iso/Containerfile.installer --build-arg LUMA_IMAGE=localhost/luma:$FEDORA_VERSION -t localhost/luma-installer:$FEDORA_VERSION .
       - name: Medir o Luma (mesmo roteiro do workflow medicao)

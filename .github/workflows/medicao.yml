@@ -45,9 +45,10 @@ jobs:
         run: sudo apt-get update -q && sudo apt-get install -y -q qemu-system-x86 qemu-utils ovmf socat tesseract-ocr
       - name: Imagens e instaladores (Luma e Kinoite pura)
         run: |
+          scripts/ci/atualizar-base.sh --gravar   # base atual do quay.io, a mesma em todo o run (F6-08)
           sudo podman build --build-arg FEDORA_VERSION=$FEDORA_VERSION --build-arg LUMA_VERSION=$LUMA_VERSION -t localhost/luma:$FEDORA_VERSION .
           sudo podman build -f build/iso/Containerfile.installer --build-arg LUMA_IMAGE=localhost/luma:$FEDORA_VERSION -t localhost/luma-installer:$FEDORA_VERSION .
-          # Mesma base do Luma (F6-08): a Kinoite pura pelo digest fixado no Containerfile
+          # Mesma base do Luma (F6-08): a Kinoite pura pelo digest gravado acima no Containerfile
           base="quay.io/fedora/fedora-kinoite:$FEDORA_VERSION@$(sed -n 's/^ARG BASE_DIGEST=//p' Containerfile)"
           sudo podman pull "$base"
           sudo podman tag "$base" localhost/kinoite:$FEDORA_VERSION
