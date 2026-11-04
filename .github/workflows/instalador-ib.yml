@@ -10,6 +10,7 @@ on:
       - .github/workflows/instalador-ib.yml
       - build/iso/**
       - installer/**
+      - scripts/ci/boot-iso.sh
 permissions:
   contents: read
 concurrency:

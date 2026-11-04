@@ -64,30 +64,31 @@ digitar() {
 			[A-Z]) k="shift-${c,,}" ;;
 			' ') k=spc ;; '-') k=minus ;; '/') k=slash ;; '.') k='dot' ;; '|') k=shift-backslash ;;
 			"'") k=apostrophe ;; '*') k=shift-8 ;; '>') k=shift-dot ;; ',') k=comma ;; '_') k=shift-minus ;;
+			';') k=semicolon ;; '=') k=equal ;; '^') k=shift-6 ;; '$') k=shift-4 ;; '#') k=shift-3 ;;
 			*) continue ;;
 		esac
 		"$LAB" key "$k" >/dev/null 2>&1 || true
 	done
 	"$LAB" key ret >/dev/null 2>&1 || true
 }
+# Uma tela por comando: limpa, digita, captura e grava o OCR no boot-resultado.txt (instalador-ib #6: sem o clear, as
+# saídas se acumulavam na mesma tela e o OCR as misturava)
+diag() {
+	local nome="$1"
+	digitar "clear; $2"
+	sleep 5
+	"$LAB" screenshot "$out/boot-diag-$nome.png" >/dev/null 2>&1 || true
+	tesseract "$out/boot-diag-$nome.png" "$out/boot-diag-$nome" -l eng >/dev/null 2>&1 || true
+	echo "F6-05 DIAG $nome (OCR): $(tr '\n' ' ' <"$out/boot-diag-$nome.txt" 2>/dev/null | cut -c1-1800)" | tee -a "$out/boot-resultado.txt"
+}
 if [ "${BOOT_DIAG:-0}" = 1 ] && [ "$verdict" = INCONCLUSIVO ] && kill -0 "$qemu_pid" 2>/dev/null; then
 	"$LAB" key ctrl-alt-f2 >/dev/null 2>&1 || true
 	sleep 3
-	digitar "grep -ihE 'error|fail|kiosk|wayland|gui|display' /tmp/anaconda.log /tmp/X.log /tmp/syslog | tail -n 22"
-	sleep 4
-	"$LAB" screenshot "$out/boot-diag-tty2.png" >/dev/null 2>&1 || true
-	tesseract "$out/boot-diag-tty2.png" "$out/boot-diag-tty2" -l eng >/dev/null 2>&1 || true
-	echo "F6-05 DIAG tty2 (OCR): $(tr '\n' ' ' <"$out/boot-diag-tty2.txt" 2>/dev/null | cut -c1-1500)" | tee -a "$out/boot-resultado.txt"
-	digitar "cat /proc/cmdline"
-	digitar "grep -ihE 'display mode|spoke' /tmp/anaconda.log | tail -n 8"
-	sleep 3
-	"$LAB" screenshot "$out/boot-diag-modo.png" >/dev/null 2>&1 || true
-	tesseract "$out/boot-diag-modo.png" "$out/boot-diag-modo" -l eng >/dev/null 2>&1 || true
-	echo "F6-05 DIAG modo e telas (OCR): $(tr '\n' ' ' <"$out/boot-diag-modo.txt" 2>/dev/null | cut -c1-1500)" | tee -a "$out/boot-resultado.txt"
-	digitar "ps -eo comm,args | grep -iE 'kiosk|anaconda|xwayland|mutter' | cut -c1-150"
-	sleep 3
-	"$LAB" screenshot "$out/boot-diag-ps.png" >/dev/null 2>&1 || true
-	tesseract "$out/boot-diag-ps.png" "$out/boot-diag-ps" -l eng >/dev/null 2>&1 || true
-	echo "F6-05 DIAG processos (OCR): $(tr '\n' ' ' <"$out/boot-diag-ps.txt" 2>/dev/null | cut -c1-1000)" | tee -a "$out/boot-resultado.txt"
+	diag modo "cat /proc/cmdline; grep -ihE 'display mode|wayland|gui' /tmp/anaconda.log | tail -n 8"
+	# instalador-ib #6: "Wayland startup failed: run-in-new-session exited with status 1"; o motivo deve estar no journal
+	diag journal "journalctl -b --no-pager | grep -iE 'kiosk|run-in-new|wayland|mutter|pam|logind|seat' | tail -n 24 | cut -c1-160"
+	diag pacotes "rpm -q gnome-kiosk anaconda-gui xorg-x11-server-Xwayland kbd mesa-dri-drivers dbus-daemon; ls /dev/dri"
+	diag script "grep -vE '^ *#|^$' /usr/libexec/anaconda/run-in-new-session | head -n 40 | cut -c1-160"
+	diag processos "ps -eo comm,args | grep -iE 'kiosk|anaconda|xwayland|mutter|logind' | cut -c1-150"
 fi
 [ "${verdict%% *}" != FALHA ]
