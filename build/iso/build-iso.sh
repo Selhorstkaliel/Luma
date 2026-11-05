@@ -26,7 +26,7 @@ run_tool() {
 	local image="$1" dir="$2" log="$3"; shift 3
 	rm -rf "$dir"; mkdir -p "$dir"
 	podman run --rm --privileged --security-opt label=type:unconfined_t \
-		-v "$storage:/var/lib/containers/storage" -v "$dir:/output" -v "$CONFIG:/config.toml:ro" \
+		-v "$storage:/var/lib/containers/storage" -v "$dir:/output" -v "${CONFIG_TOOL:-$CONFIG}:/config.toml:ro" \
 		"$image" "$@" >"$log" 2>&1
 }
 [ "$storage" = /var/lib/containers/storage ] || echo "AVISO: armazenamento em $storage; o image-builder espera /var/lib/containers/storage" >&2
@@ -41,8 +41,14 @@ echo "espaço antes da ISO:" >&2; espaco
 # sistema subiu sem sessão gráfica); o workflow instalador-ib testa a do image-builder à parte.
 ferramenta="${ISO_FERRAMENTA:-bib}"
 case "$ferramenta" in auto|bib|image-builder) ;; *) echo "build-iso.sh: ISO_FERRAMENTA inválida: $ferramenta" >&2; exit 2 ;; esac
+# instalador-ib #12: com "lang pt_BR.UTF-8" no kickstart a interface saiu em inglês ("localization: setting locale to:
+# en_US.UTF-8" antes de o kickstart ser lido); a tradução existe no instalador. O idioma da interface vem do boot
+# (inst.lang). Só no blueprint do image-builder [H: customizations.kernel.append vale para a linha do boot da ISO];
+# o bib continua com o config.toml puro (no bib, kernel.append iria para o sistema instalado).
+cfg_ib="$out/config-image-builder.toml"
+{ cat "$CONFIG"; printf '\n[customizations.kernel]\nappend = "inst.lang=pt_BR.UTF-8 inst.keymap=br"\n'; } >"$cfg_ib"
 tool="$IB_IMAGE"; type=bootc-installer; dir="$out/ib-bootc-installer"; ib_fail=""
-if [ "$ferramenta" = bib ] || ! run_tool "$IB_IMAGE" "$dir" "$out/image-builder-bootc-installer.log" \
+if [ "$ferramenta" = bib ] || ! CONFIG_TOOL="$cfg_ib" run_tool "$IB_IMAGE" "$dir" "$out/image-builder-bootc-installer.log" \
 	build --blueprint /config.toml --bootc-ref "$installer" --bootc-installer-payload-ref "$payload" --output-dir /output bootc-installer; then
 	if [ "$ferramenta" != bib ]; then
 		echo "bootc-installer falhou (log em $out/image-builder-bootc-installer.log)" >&2
