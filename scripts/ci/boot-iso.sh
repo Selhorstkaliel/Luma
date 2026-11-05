@@ -69,6 +69,7 @@ digitar() {
 			' ') k=spc ;; '-') k=minus ;; '/') k=slash ;; '.') k='dot' ;; '|') k=shift-backslash ;;
 			"'") k=apostrophe ;; '*') k=shift-8 ;; '>') k=shift-dot ;; ',') k=comma ;; '_') k=shift-minus ;;
 			\\) k=backslash ;; ';') k=semicolon ;; '=') k=equal ;; '^') k=shift-6 ;; '$') k=shift-4 ;; '#') k=shift-3 ;;
+			'(') k=shift-9 ;; ')') k=shift-0 ;; ':') k=shift-semicolon ;; '"') k=shift-apostrophe ;; '&') k=shift-7 ;;
 			*) continue ;;
 		esac
 		"$LAB" key "$k" >/dev/null 2>&1 || true
@@ -91,8 +92,10 @@ if [ "${BOOT_DIAG:-0}" = 1 ] && [ "${verdict%% *}" != FALHA ] && kill -0 "$qemu_
 	"$LAB" key ctrl-alt-f2 >/dev/null 2>&1 || true
 	sleep 3
 	diag modo "cat /proc/cmdline; grep -ihE 'display mode|wayland|gui' /tmp/anaconda.log | tail -n 8"
-	# instalador-ib #10 achou a causa do modo texto (falta o módulo pam, corrigido); agora o idioma da interface
-	diag idioma "cat /etc/locale.conf; ls /usr/share/locale/pt_BR/LC_MESSAGES | grep -c anaconda; grep -ihE 'lang|locale' /tmp/anaconda.log | tail -n 12 | cut -c1-150"
-	diag processos "ps -eo comm,args | grep -iE 'kiosk|anaconda|xwayland|mutter|logind' | cut -c1-150"
+	# instalador-ib #13: com inst.lang=pt_BR.UTF-8 no boot, o Anaconda ainda fez "setting locale to: en_US.UTF-8".
+	# [H] o locale pt_BR não existe no ambiente do instalador (limpeza do lorax/osbuild) e o Anaconda volta ao inglês.
+	diag locales "cat /etc/locale.conf; locale -a | grep -ci pt_br; ls /usr/lib/locale; ls /usr/share/locale/pt_BR/LC_MESSAGES | grep -c anaconda"
+	diag anacondalog "grep -inE 'lang|locale' /tmp/anaconda.log | head -n 20 | cut -c1-150"
+	diag suporte "python3 -c 'from pyanaconda import localization as l; print(l.is_supported_locale(\"pt_BR.UTF-8\"), l.locale_has_translation(\"pt_BR.UTF-8\"))' 2>&1 | tail -n 3"
 fi
 [ "${verdict%% *}" != FALHA ]
