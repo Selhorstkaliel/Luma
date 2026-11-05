@@ -49,7 +49,7 @@ jobs:
         run: |
           scripts/ci/atualizar-base.sh --gravar   # base atual do quay.io, a mesma em todo o run (F6-08)
           sudo podman build --build-arg FEDORA_VERSION=$FEDORA_VERSION --build-arg LUMA_VERSION=$LUMA_VERSION -t localhost/luma:$FEDORA_VERSION .
-          sudo podman build -f build/iso/Containerfile.installer --build-arg LUMA_IMAGE=localhost/luma:$FEDORA_VERSION -t localhost/luma-installer:$FEDORA_VERSION .
+          sudo podman build -f build/iso/Containerfile.installer --build-arg EXIGIR_GUI=1 --build-arg LUMA_IMAGE=localhost/luma:$FEDORA_VERSION -t localhost/luma-installer:$FEDORA_VERSION .
       - name: ISO pelo image-builder e boot com Secure Boot (o Anaconda dela demora mais a abrir)
         run: |
           sudo ISO_FERRAMENTA=$ISO_FERRAMENTA build/iso/build-iso.sh localhost/luma:$FEDORA_VERSION localhost/luma-installer:$FEDORA_VERSION "$OUT" "$LUMA_VERSION"

@@ -64,18 +64,19 @@ digitar() {
 			[A-Z]) k="shift-${c,,}" ;;
 			' ') k=spc ;; '-') k=minus ;; '/') k=slash ;; '.') k='dot' ;; '|') k=shift-backslash ;;
 			"'") k=apostrophe ;; '*') k=shift-8 ;; '>') k=shift-dot ;; ',') k=comma ;; '_') k=shift-minus ;;
-			';') k=semicolon ;; '=') k=equal ;; '^') k=shift-6 ;; '$') k=shift-4 ;; '#') k=shift-3 ;;
+			\\) k=backslash ;; ';') k=semicolon ;; '=') k=equal ;; '^') k=shift-6 ;; '$') k=shift-4 ;; '#') k=shift-3 ;;
 			*) continue ;;
 		esac
 		"$LAB" key "$k" >/dev/null 2>&1 || true
 	done
 	"$LAB" key ret >/dev/null 2>&1 || true
 }
-# Uma tela por comando: limpa, digita, captura e grava o OCR no boot-resultado.txt (instalador-ib #6: sem o clear, as
+# Uma tela por comando: limpa (printf \ec, porque o instalador não tem clear; instalador-ib #10), digita, captura e
+# grava o OCR no boot-resultado.txt (instalador-ib #6: sem limpar, as
 # saídas se acumulavam na mesma tela e o OCR as misturava)
 diag() {
 	local nome="$1"
-	digitar "clear; $2"
+	digitar "printf '\\ec'; $2"
 	sleep 5
 	"$LAB" screenshot "$out/boot-diag-$nome.png" >/dev/null 2>&1 || true
 	tesseract "$out/boot-diag-$nome.png" "$out/boot-diag-$nome" -l eng >/dev/null 2>&1 || true
@@ -87,7 +88,7 @@ if [ "${BOOT_DIAG:-0}" = 1 ] && [ "$verdict" = INCONCLUSIVO ] && kill -0 "$qemu_
 	diag modo "cat /proc/cmdline; grep -ihE 'display mode|wayland|gui' /tmp/anaconda.log | tail -n 8"
 	# instalador-ib #6: "Wayland startup failed: run-in-new-session exited with status 1"; o motivo deve estar no journal
 	diag journal "journalctl -b --no-pager | grep -iE 'kiosk|run-in-new|wayland|mutter|pam|logind|seat' | tail -n 24 | cut -c1-160"
-	diag pacotes "rpm -q gnome-kiosk anaconda-gui xorg-x11-server-Xwayland kbd mesa-dri-drivers dbus-daemon; ls /dev/dri"
+	diag pacotes "python3 -c 'import pam, systemd.journal'; ls /usr/bin/gnome-kiosk /usr/bin/Xwayland /dev/dri"
 	diag script "grep -vE '^ *#|^$' /usr/libexec/anaconda/run-in-new-session | head -n 40 | cut -c1-160"
 	diag processos "ps -eo comm,args | grep -iE 'kiosk|anaconda|xwayland|mutter|logind' | cut -c1-150"
 fi
