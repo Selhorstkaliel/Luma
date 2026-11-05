@@ -52,6 +52,10 @@ else verdict=INCONCLUSIVO; fi
 	echo "veredito: $verdict (capturas aos ${early}s e ${wait_s}s, OCR tesseract)"
 	echo "texto final (OCR): $(cut -c1-400 <<<"$final")"
 	echo "F6-05 INFO cor da barra lateral (x=12, y=420 / y=700; Midnight ~ 8 13 25): $cor_lateral"
+	# Critério da etapa C: instalador em português (instalador-ib #11: gráfico e Midnight, mas em inglês)
+	if grep -Eqi 'RESUMO DA INSTALA|DESTINO DA INSTALA|Cria..o de usu' <<<"$final"; then idioma=pt
+	elif grep -Eqi 'INSTALLATION SUMMARY|Installation Destination' <<<"$final"; then idioma=en; else idioma='?'; fi
+	echo "F6-05 INFO idioma do instalador (OCR): $idioma"
 } | tee "$out/boot-resultado.txt"
 # BOOT_DIAG=1 (workflow instalador-ib): com a interface gráfica do Anaconda sem aparecer, o shell do TTY2 mostra
 # por quê. As teclas vão pelo QMP (teclado us do instalador); a tela vai para o log por OCR.
@@ -82,14 +86,13 @@ diag() {
 	tesseract "$out/boot-diag-$nome.png" "$out/boot-diag-$nome" -l eng >/dev/null 2>&1 || true
 	echo "F6-05 DIAG $nome (OCR): $(tr '\n' ' ' <"$out/boot-diag-$nome.txt" 2>/dev/null | cut -c1-1800)" | tee -a "$out/boot-resultado.txt"
 }
-if [ "${BOOT_DIAG:-0}" = 1 ] && [ "$verdict" = INCONCLUSIVO ] && kill -0 "$qemu_pid" 2>/dev/null; then
+# Desde o instalador-ib #11 roda também com veredito INSTALADOR (para ver o idioma); o terminal fica no TTY2.
+if [ "${BOOT_DIAG:-0}" = 1 ] && [ "${verdict%% *}" != FALHA ] && kill -0 "$qemu_pid" 2>/dev/null; then
 	"$LAB" key ctrl-alt-f2 >/dev/null 2>&1 || true
 	sleep 3
 	diag modo "cat /proc/cmdline; grep -ihE 'display mode|wayland|gui' /tmp/anaconda.log | tail -n 8"
-	# instalador-ib #6: "Wayland startup failed: run-in-new-session exited with status 1"; o motivo deve estar no journal
-	diag journal "journalctl -b --no-pager | grep -iE 'kiosk|run-in-new|wayland|mutter|pam|logind|seat' | tail -n 24 | cut -c1-160"
-	diag pacotes "python3 -c 'import pam, systemd.journal'; ls /usr/bin/gnome-kiosk /usr/bin/Xwayland /dev/dri"
-	diag script "grep -vE '^ *#|^$' /usr/libexec/anaconda/run-in-new-session | head -n 40 | cut -c1-160"
+	# instalador-ib #10 achou a causa do modo texto (falta o módulo pam, corrigido); agora o idioma da interface
+	diag idioma "cat /etc/locale.conf; ls /usr/share/locale/pt_BR/LC_MESSAGES | grep -c anaconda; grep -ihE 'lang|locale' /tmp/anaconda.log | tail -n 12 | cut -c1-150"
 	diag processos "ps -eo comm,args | grep -iE 'kiosk|anaconda|xwayland|mutter|logind' | cut -c1-150"
 fi
 [ "${verdict%% *}" != FALHA ]
