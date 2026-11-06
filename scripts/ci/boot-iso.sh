@@ -70,6 +70,7 @@ digitar() {
 			"'") k=apostrophe ;; '*') k=shift-8 ;; '>') k=shift-dot ;; ',') k=comma ;; '_') k=shift-minus ;;
 			\\) k=backslash ;; ';') k=semicolon ;; '=') k=equal ;; '^') k=shift-6 ;; '$') k=shift-4 ;; '#') k=shift-3 ;;
 			'(') k=shift-9 ;; ')') k=shift-0 ;; ':') k=shift-semicolon ;; '"') k=shift-apostrophe ;; '&') k=shift-7 ;;
+			'[') k=bracket_left ;; ']') k=bracket_right ;; '<') k=shift-comma ;;
 			*) continue ;;
 		esac
 		"$LAB" key "$k" >/dev/null 2>&1 || true
@@ -92,10 +93,12 @@ if [ "${BOOT_DIAG:-0}" = 1 ] && [ "${verdict%% *}" != FALHA ] && kill -0 "$qemu_
 	"$LAB" key ctrl-alt-f2 >/dev/null 2>&1 || true
 	sleep 3
 	diag modo "cat /proc/cmdline; grep -ihE 'display mode|wayland|gui' /tmp/anaconda.log | tail -n 8"
-	# instalador-ib #13: com inst.lang=pt_BR.UTF-8 no boot, o Anaconda ainda fez "setting locale to: en_US.UTF-8".
-	# [H] o locale pt_BR não existe no ambiente do instalador (limpeza do lorax/osbuild) e o Anaconda volta ao inglês.
-	diag locales "cat /etc/locale.conf; locale -a | grep -ci pt_br; ls /usr/lib/locale; ls /usr/share/locale/pt_BR/LC_MESSAGES | grep -c anaconda"
-	diag anacondalog "grep -inE 'lang|locale' /tmp/anaconda.log | head -n 20 | cut -c1-150"
-	diag suporte "python3 -c 'from pyanaconda import localization as l; print(l.is_supported_locale(\"pt_BR.UTF-8\"), l.locale_has_translation(\"pt_BR.UTF-8\"))' 2>&1 | tail -n 3"
+	# instalador-ib #14: o locale pt_BR existe e o Anaconda o aceita (is_supported_locale e locale_has_translation True), o
+	# /etc/locale.conf do instalador é LANG=C.UTF-8 (reescrito no osbuild) e mesmo com inst.lang no boot ele escolhe en_US.
+	# Falta saber se o Anaconda lê o inst.lang e de onde vem o idioma: o serviço, o ambiente do processo e o código.
+	diag anacondalog "grep -inE 'lang|locale' /tmp/anaconda.log | head -n 12 | cut -c1-150"
+	diag servico "systemctl cat anaconda.service 2>&1 | grep -iE 'execstart|environ|lang' | head -n 6; for p in /proc/[0-9]*; do grep -qa bin/anaconda \$p/cmdline 2>/dev/null && tr '\\0' '\\n' < \$p/environ | grep -i '^lang'; done | head -n 4"
+	diag kernelargs "python3 -c 'from pyanaconda.core.kernel import kernel_arguments as k; print(repr(k.get(\"lang\")), repr(k.get(\"inst.lang\")))' 2>&1 | tail -n 3"
+	diag initlocale "grep -n -A30 'def initialize_locale' \$(python3 -c 'import pyanaconda,os; print(os.path.dirname(pyanaconda.__file__))')/startup_utils.py | grep -iE 'lang|locale' | head -n 16 | cut -c1-140"
 fi
 [ "${verdict%% *}" != FALHA ]

@@ -50,6 +50,10 @@ RUN echo "luma: traduções pt_BR do Anaconda: $(ls /usr/share/locale/pt_BR/LC_M
     ls /usr/share/locale/pt_BR/LC_MESSAGES/anaconda*.mo >/dev/null 2>&1 || echo "luma: AVISO: traduções pt_BR do Anaconda AUSENTES"
 # instalador-ib #13: com inst.lang=pt_BR o Anaconda ainda escolheu en_US; registra se o locale existe na imagem
 RUN echo "luma: locales pt no instalador (antes do osbuild): $(locale -a 2>/dev/null | grep -i '^pt' | tr '\n' ' ')"
+# instalador-ib #14: o pt_BR existe e o Anaconda o aceita, mas o locale.conf do instalador vira LANG=C.UTF-8 no osbuild
+# e a interface sai em en_US mesmo com inst.lang no boot. [H] O Anaconda herda o LANG do serviço: só no instalador.
+RUN mkdir -p /etc/systemd/system/anaconda.service.d && \
+    printf '[Service]\nEnvironment=LANG=pt_BR.UTF-8\n' >/etc/systemd/system/anaconda.service.d/50-luma-idioma.conf
 RUN dnf -y install --skip-unavailable grub2-efi-x64-cdboot python3-mako lorax-templates-generic squashfs-tools \
       dracut-config-generic dracut-network net-tools prefixdevname biosdevname && dnf clean all \
     || echo "luma: AVISO: pacotes do instalador para o image-builder não instalaram"
