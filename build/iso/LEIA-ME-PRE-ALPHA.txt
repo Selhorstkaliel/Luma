@@ -8,6 +8,7 @@ Mesmo assim: confira a tela de resumo antes de clicar em instalar e nunca dê bo
 em um computador real, nem com pendrive esquecido na porta USB.
 
 Esta ISO é um build automático de desenvolvimento, sem garantia de nenhum tipo.
+O instalador é o Anaconda com a marca Luma, em português e com teclado br (a ISO tem cerca de 7 GB).
 O que ela contém: Fedora Kinoite 44 com a identidade Luma, firewall de entrada fechado,
 tema Luma Midnight, tela de boot Luma, app Ajustes, "luma-jogos" (Steam/Lutris/Heroic/Bottles via
 Flathub) e o comando "sudo luma-diagnostico". Recuperação: docs/usuario/recuperacao.md no repositório.

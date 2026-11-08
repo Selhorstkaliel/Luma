@@ -45,7 +45,7 @@ Uma etapa por vez; cada uma só fecha com evidência em [TESTS.md](TESTS.md).
 | G | Decisões do usuário: nome/logotipo (0010) e Flathub (0004) | decisões registradas |
 | H | Hardware real e lançamento (Fase 8) | bloqueada até existir máquina de teste |
 
-**Agora:** etapa A fechada (2026-11-03). Etapa B reaberta em 2026-11-04: o quay.io apagou os digests fixados em menos de um dia e todos os builds quebraram (ci #89 e #91); corrigida resolvendo o digest em cada build (F6-08), confirmada no ci #92, iso #58 e instalador-ib #10: **fechada**. Atual: **etapa C** (instalador com a marca Luma): no instalador-ib #15 o instalador do image-builder abriu gráfico, com a marca Luma, a cor Midnight e em português; falta 1 run de confirmação e a troca da ISO entregue.
+**Agora:** etapa A fechada (2026-11-03). Etapa B reaberta em 2026-11-04: o quay.io apagou os digests fixados em menos de um dia e todos os builds quebraram (ci #89 e #91); corrigida resolvendo o digest em cada build (F6-08), confirmada no ci #92, iso #58 e instalador-ib #10: **fechada**. Atual: **etapa C** (instalador com a marca Luma): no instalador-ib #15 o instalador do image-builder abriu gráfico, com a marca Luma, a cor Midnight e em português; confirmado no #16; a ISO entregue passou a sair do image-builder e a etapa C fecha no 1º iso verde com essa troca.
 
 ## Próximo passo
 1. Usuário: seguir [docs/usuario/passos-do-usuario.md](usuario/passos-do-usuario.md):

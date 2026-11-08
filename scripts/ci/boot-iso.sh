@@ -48,15 +48,34 @@ if grep -Eqi "$bad" <<<"$all" || grep -Eqi "$stuck" <<<"$final"; then verdict=FA
 elif grep -Eqi "$unattended" <<<"$final"; then verdict="FALHA (instalação começou sem interação)"
 elif grep -Eqi "$good" <<<"$final"; then verdict=INSTALADOR
 else verdict=INCONCLUSIVO; fi
+# Critério da etapa C: instalador em português (instalador-ib #11: gráfico e Midnight, mas em inglês). Fora do bloco
+# com tee (subshell) para o valor valer no BOOT_EXIGIR_MARCA abaixo.
+if grep -Eqi 'RESUMO DA INSTALA|DESTINO DA INSTALA|Cria..o de usu' <<<"$final"; then idioma=pt
+elif grep -Eqi 'INSTALLATION SUMMARY|Installation Destination' <<<"$final"; then idioma=en; else idioma='?'; fi
 {
 	echo "veredito: $verdict (capturas aos ${early}s e ${wait_s}s, OCR tesseract)"
 	echo "texto final (OCR): $(cut -c1-400 <<<"$final")"
 	echo "F6-05 INFO cor da barra lateral (x=12, y=420 / y=700; Midnight ~ 8 13 25): $cor_lateral"
-	# Critério da etapa C: instalador em português (instalador-ib #11: gráfico e Midnight, mas em inglês)
-	if grep -Eqi 'RESUMO DA INSTALA|DESTINO DA INSTALA|Cria..o de usu' <<<"$final"; then idioma=pt
-	elif grep -Eqi 'INSTALLATION SUMMARY|Installation Destination' <<<"$final"; then idioma=en; else idioma='?'; fi
 	echo "F6-05 INFO idioma do instalador (OCR): $idioma"
 } | tee "$out/boot-resultado.txt"
+# BOOT_EXIGIR_MARCA=1 (iso.yml, ISO entregue desde a etapa C): instalador sem português ou sem a cor Midnight reprova.
+# Cor: cada canal da medida em y=420 a no máximo 40 do Midnight (8 13 25); instalador-ib #15/#16 mediram 10 15 26.
+if [ "${BOOT_EXIGIR_MARCA:-0}" = 1 ] && [ "$verdict" = INCONCLUSIVO ]; then
+	verdict="FALHA (marca: instalador não reconhecido na tela)"
+	echo "veredito final: $verdict" | tee -a "$out/boot-resultado.txt"
+elif [ "${BOOT_EXIGIR_MARCA:-0}" = 1 ] && [ "$verdict" = INSTALADOR ]; then
+	read -r cr cg cb _ <<<"${cor_lateral%% /*}"
+	cor_ok=no
+	if [[ "$cr$cg$cb" =~ ^[0-9]+$ ]] && (( cr - 8 <= 40 && 8 - cr <= 40 && cg - 13 <= 40 && 13 - cg <= 40 && cb - 25 <= 40 && 25 - cb <= 40 )); then
+		cor_ok=yes
+	fi
+	if [ "$idioma" != pt ] || [ "$cor_ok" != yes ]; then
+		verdict="FALHA (marca: idioma=$idioma cor=${cor_lateral%% /*})"
+		echo "veredito final: $verdict" | tee -a "$out/boot-resultado.txt"
+	else
+		echo "F6-05 PASSOU marca Luma: idioma=pt cor=${cor_lateral%% /*}" | tee -a "$out/boot-resultado.txt"
+	fi
+fi
 # BOOT_DIAG=1 (workflow instalador-ib): com a interface gráfica do Anaconda sem aparecer, o shell do TTY2 mostra
 # por quê. As teclas vão pelo QMP (teclado us do instalador); a tela vai para o log por OCR.
 digitar() {

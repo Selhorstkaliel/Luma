@@ -46,6 +46,9 @@ jobs:
       LUMA_VERSION: "0.9.0-dev"
       # Único branch que publica (o de desenvolvimento do Luma); push em outro branch só testa
       PUBLICAR_BRANCH: claude/eager-franklin-mb8qmf
+      # Etapa C (F6-05): a ISO entregue sai do image-builder, com o instalador da imagem Luma (marca, cor Midnight,
+      # português). Validado no instalador-ib #15 e #16. Voltar ao bootc-image-builder: "bib".
+      ISO_FERRAMENTA: image-builder
       IMAGEM_GHCR: ghcr.io/selhorstkaliel/luma
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +58,8 @@ jobs:
         # nunca graphroot diferente.
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache /usr/local/share/boost
+          # A ISO do image-builder tem ~7 GiB (instalador-ib #8 ficou sem espaço)
+          sudo rm -rf /usr/local/.ghcup /usr/lib/jvm /usr/share/swift /opt/microsoft /opt/az
           sudo docker image prune -af >/dev/null || true
           df -h / /mnt
           root_free=$(df --output=avail -k / | tail -1); mnt_free=$(df --output=avail -k /mnt | tail -1)
@@ -75,15 +80,16 @@ jobs:
       - name: Testes da imagem
         run: sudo podman run --rm -v "$PWD/tests/image:/t:ro" localhost/luma:$FEDORA_VERSION /t/test-image.sh
       - name: Build da imagem de instalador (Luma + Anaconda)
-        run: sudo podman build -f build/iso/Containerfile.installer --build-arg LUMA_IMAGE=localhost/luma:$FEDORA_VERSION -t localhost/luma-installer:$FEDORA_VERSION .
+        run: sudo podman build -f build/iso/Containerfile.installer --build-arg EXIGIR_GUI=1 --build-arg LUMA_IMAGE=localhost/luma:$FEDORA_VERSION -t localhost/luma-installer:$FEDORA_VERSION .
       - name: Gerar ISO
         run: |
-          sudo build/iso/build-iso.sh localhost/luma:$FEDORA_VERSION localhost/luma-installer:$FEDORA_VERSION "$OUT" "$LUMA_VERSION"
+          sudo ISO_FERRAMENTA=$ISO_FERRAMENTA build/iso/build-iso.sh localhost/luma:$FEDORA_VERSION localhost/luma-installer:$FEDORA_VERSION "$OUT" "$LUMA_VERSION"
           df -h / /mnt
       - name: Smoke test de boot (QEMU + OVMF com Secure Boot)
         run: |
           sudo apt-get update -q && sudo apt-get install -y -q qemu-system-x86 qemu-utils ovmf socat tesseract-ocr
-          sudo scripts/ci/boot-iso.sh "$OUT/luma-$LUMA_VERSION-x86_64.iso" "$OUT/boot" 240
+          # 420 s: o Anaconda da ISO do image-builder demora mais a abrir; reprova sem português ou sem a cor Midnight
+          sudo BOOT_EXIGIR_MARCA=1 scripts/ci/boot-iso.sh "$OUT/luma-$LUMA_VERSION-x86_64.iso" "$OUT/boot" 420
       - name: Preparar artefato
         if: always()
         run: |
@@ -116,7 +122,7 @@ jobs:
       - name: Teste do sistema instalado (instalação sem interação, Secure Boot, sessão, nmap, Steam, Lume)
         run: |
           sudo apt-get install -y -q dnsmasq-base nmap
-          sudo WORK_DIR="$(dirname "$OUT")/luma-vm-test" scripts/ci/vm-test.sh \
+          sudo ISO_FERRAMENTA=$ISO_FERRAMENTA WORK_DIR="$(dirname "$OUT")/luma-vm-test" scripts/ci/vm-test.sh \
             localhost/luma:$FEDORA_VERSION localhost/luma-installer:$FEDORA_VERSION "$EV"
       - name: Preparar evidências do sistema instalado
         if: always() && env.EV != ''
